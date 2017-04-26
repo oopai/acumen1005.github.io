@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="google-site-verification" content="xFcvMZq5Xxvttne4BMyC276ExgD_GG5GUfEjKg2S1a8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="凭自己的能力去赢得一场胜利
+">
+    <meta name="keywords"  content="谷雷雷, iOS, acumen, 咕噜噜, acumen1005, 互联网, 移动端技术">
+    <link rel="stylesheet" type="text/css" href="/media/css/main.css">
+    <link rel="stylesheet" type="text/css" href="/media/css/rouge.css">
+    <link rel="stylesheet" type="text/css" href="/media/css/syntax.css">    
+    <link rel="stylesheet" type="text/css" href="/media/css/bootstrap.css">
+
+    <!-- <link rel="shortcut icon" href="/img/favicon.ico"> -->
+
+    <title>［翻译］应用程序的执行状态 - acumen 的博客 | acumen Blog</title>
+
+    <script></script>
+</head>
+
+
+<!-- hack iOS CSS :active style -->
+<body ontouchstart="">
+	<div id="container">
+		<div id="main" role="main">
+			<header>
+				<h1>［翻译］应用程序的执行状态</h1>
+			</header>
+			<nav>
+				<p><a title="home" href="/">home</a></p>
+				<p><a title="about" href="/about/">about</a></p>
+				<p><a title="links" href="/links/">links</a></p>
+			</nav>
+			<article class="content">
+        		<section class="post">
+<p>在任何时刻，你的应用程序正处于下表的某一个状态。在整个系统中应用状态的改变是对动作发生做出的响应。比如，当用户按下 Home 健，一个来电，或者任何其他中断发生，正在运行的应用程序立刻做出响应。</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>状态</th>
+      <th style="text-align: center">描述</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>未运行</td>
+      <td style="text-align: center">应用程序还未启动或者在运行时被系统终止</td>
+    </tr>
+    <tr>
+      <td>未激活</td>
+      <td style="text-align: center">应用程序正运行在前台但是没有接收事件（即使它可能在执行其他代码），应用短暂地处于这种状态，作为转变其他状态的过渡。</td>
+    </tr>
+    <tr>
+      <td>激活</td>
+      <td style="text-align: center">应用程序运行在前台并接收事件。这是前台应用正常的模式。</td>
+    </tr>
+    <tr>
+      <td>后台</td>
+      <td style="text-align: center">应用程序处于后台并且执行代码，大部分应用程序进入此状态很短暂并且将要被挂起。然而，在此状态应用程序可以请求额外的执行时间保持该状态。此外，一个直接被启动进入后台的应用程序可以进入该状态而不是未激活状态。处于后台如何执行代码的相关信息，请看  Background Execution。</td>
+    </tr>
+    <tr>
+      <td>挂起</td>
+      <td style="text-align: center">应用程序处于后台但是不执行代码。系统会自动将这些应用程序移动到此状态，并且没有通知该应用程序。当挂起时，应用程序保持内存不执行任何代码。当应用程序处于低内存的情况，系统可能会清除挂起的应用程序为前台应用程序留出更多的空间。</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>大部分状态转换都伴随着相应的代理方法调用。这些方法在状态改变的时候响应。下列是这些方法和使用总结。</p>
+
+<p><code class="highlighter-rouge">application:willFinishLaunchingWithOptions:</code> 这个方法应用程序在启动时首先执行的。<br />
+<code class="highlighter-rouge">application:didFinishLaunchingWithOptions:</code> 这个方法在应用程序呈现给用户之前允许你做一些最后的初始化。<br />
+<code class="highlighter-rouge">applicationDidBecomeActive:</code> 应用程序自动即将成为前台应用，调用这个方法需要一点时间准备。<br />
+<code class="highlighter-rouge">applicationWillResignActive:</code>应用程序正当从前台状态转变，进入休眠状态。<br />
+<code class="highlighter-rouge">applicationDidEnterBackground:</code> 应用程序正在后台运行可能在任何时候被挂起。<br />
+<code class="highlighter-rouge">applicationWillEnterForeground:</code> 应用程序正在从后台转变将进入前台，但是此时仍未激活。<br />
+<code class="highlighter-rouge">applicationWillTerminate:</code> 应用程序正在被终止，如果应用程序已经被挂起，将不会调用此方法。</p>
+
+<p><img src="../../../../img/post/translate-2.png" alt="" /></p>
+
+<h2 id="applicationwillfinishlaunchingwithoptions">application:willFinishLaunchingWithOptions:</h2>
+
+<p><strong><em>详述</em></strong></p>
+
+<p>调用此方法（相应的方法 application:didFinishLaunchingWithOptions:）来初始化应用并且准备运行，在应用已经启动并且main storyboard 或者 nib 文件被装载之后，应用状态已经复原之前 此方法被调用。在此方法被调用的时候，应用正处于未激活状态。</p>
+
+<p>如果应用程序通过特殊的方式启动，launchOptions字典包含了的这次特殊启动的原因。由于这些启动原因，系统将调用另外的代理方法。比如应用被启动打开一个URL，系统将在应用自己完成初始化之后，调用application:openURL:options:  方法。启动键（launchOptions中的健）的存在让你有机会去设计你的行为。就打开一个URL来说，如果URL是一个用户想要打开的文档，你将要去阻止应用状态复原。</p>
+
+<p>当请求打开一个URL，这个方法的返回结果和application:didFinishLaunchingWithOptions:方法的返回结果共同决定一个URL是否需要处理。如果两个方法中有一个方法返回NO，系统将不会调用application:openURL:options:  方法。如果其中一个方法没有被实现，只需要考虑那个被实现的方法的返回值。</p>
+
+<p>有时候，用户通过主屏幕快速操作（主要是3D touch）启动应用，为了确保能正确处理这种启动方式，阅读application:performActionForShortcutItem:completionHandler: 方法的详述。</p>
+
+<h2 id="applicationdidfinishlaunchingwithoptions">application:didFinishLaunchingWithOptions:</h2>
+
+<p><strong><em>详述</em></strong></p>
+
+<p>调用此方法（相应的方法application:willFinishLaunchingWithOptions:）来完成应用的初始化和最后的调整。此方法在状态恢复发生之后，在应用的window和其他UI呈现之前调用。在此方法返回的某些时刻，系统调用其他的应用代理方法转变状态到active（foreground）状态或者background状态。</p>
+
+<p>此方法是最后一次去处理launchOptions 中的健。如果没有处理application:willFinishLaunchingWithOptions:方法中的健，你应该在这个方法中查看这些健，并且给出适当的响应。</p>
+
+<p>不是应用代理方法的对象可以通过监听名为UIApplicationDidFinishLaunchingNotification 的通知，同时访问通知的userInfo 字典来访问launchOptions字典中的值。在此方法返回后通知马上被分发。</p>
+
+<h2 id="applicationdidbecomeactive">applicationDidBecomeActive:</h2>
+
+<p><strong><em>详述</em></strong></p>
+
+<p>此方法的调用让应用从 inactive 状态到 active 状态。此方法的调用是因为用户或者系统已经启动应用。如果用户忽略那些让应用进入 inactive 状态的中断（比如一个来电或者短信），应用也会返回到 active 状态。</p>
+
+<p>你可以调用此方法来重启任何被暂停（或者还未启动）的任务。比如，你可以调用此方法来重启定时器或者上调 OpenGL ES 帧速率。如果应用已经在处于后台，可以调用此方法来刷新应用的用户界面。</p>
+
+<p>调用此方法之后，应用也会分发 UIApplicationDidBecomeActiveNotification 通知给需要使用的对象。</p>
+
+<h2 id="applicationwillresignactive">applicationWillResignActive:</h2>
+
+<p><strong><em>详述</em></strong></p>
+
+<p>此方法的调用将让应用从 active 状态到 inactive 状态。发生在短暂的中断（比如一个来电或者短信）或者用户退出应用、开始转变到 background 状态。在 inactive 状态的应用还在运行但是不调度事件给响应者。</p>
+
+<p>调用此方法来终止正在进行的任务，使定时器失效，下调 OpenGL ES 帧速率。游戏可以调用此方法来暂停游戏。当在等待转变到 active 或者 background 状态时，处于 inactive 状态的应用做极少的工作。</p>
+
+<p>如果应用还没保存用户数据，可以在这时保存来确保数据不丢失。但是，我们推荐在应用程序运行中适当的时候保存用户数据，通常在特定的操作响应。比如，当用户把数据输入屏幕时保存数据。切忌依靠特定的应用状态转变来保存应用的关键数据。</p>
+
+<p>此方法调用之后，应用也会分发 UIApplicationDidBecomeActiveNotification 通知给需要使用的对象。</p>
+
+<h2 id="applicationdidenterbackground">applicationDidEnterBackground:</h2>
+
+<p><strong><em>详述</em></strong></p>
+
+<p>调用此方法来释放共享的资源，使定时器失效，并且储存足够的应用状态信息，如应用终止之后，恢复应用到当前状态。应该禁止更新应用的用户界面和避免使用各种类型的系统共享的资源（比如用户连接数据库）。一定要避免在后台使用OpenGL ES。</p>
+
+<p>此方法的实现大概需要5秒的时间去执行任务和返回。如果需要额外的时间去执行最后的任务，可以通过调用beginBackgroundTaskWithExpirationHandler:方法向系统申请额外的执行时间。在现实中，applicationDidEnterBackground:方法返回的越快越好。在超时之前此方法还没有返回，应用将被终止并清除内存。</p>
+
+<p>在此方法退出之前，可以执行任何与UI相关的任务，但是其他任务（比如保存状态）应该被加入到并发调度队列里或者辅助线程。因为任何在applicationDidEnterBackground: 方法中的后台任务在此方法结束之后不能执行，需要在这些任务开始之前申请额外的后台运行时间。换言之，先调用 beginBackgroundTaskWithExpirationHandler: 方法，然后执行调度队列或者辅助线程里的任务。</p>
+
+<p>此方法调用之后，应用也会分发 UIApplicationDidEnterBackgroundNotification 通知给需要使用的对象。</p>
+
+<h2 id="applicationwillenterforeground">applicationWillEnterForeground:</h2>
+
+<p><strong><em>详述</em></strong></p>
+
+<p>在 iOS 4.0 以后，此方法调用作为 background 到 active  状态转变的一部分。调用此方法撤销应用在进入后台所做的修改。此方法的调用总是伴随着 applicationDidBecomeActive:  方法的调用，applicationDidBecomeActive: 方法使应用从 inactive 状态到 active 状态。</p>
+
+<p>此方法调用之后，应用也会分发 UIApplicationWillEnterForegroundNotification 通知给需要使用的对象。</p>
+
+<h2 id="applicationwillterminate">applicationWillTerminate:</h2>
+
+<p><strong><em>详述</em></strong></p>
+
+<p>此方法是应用将被完全终止和清除内存。此方法用来执行最后的清理任务，比如释放共享资源，保存用户数据和使定时器失效。此方法的实现大概需要5秒的时间执行和返回。如果方法在时限之前没有返回，系统将杀死该进程。</p>
+
+<p>对于支持后台运行或者 iOS3.x之前的应用。当用户退出应用时方法才调用。对于支持后台运行的应用，在用户退出应用时，此方法一般不调用，因为如果那样的话应用可以直接进入后台。然而，应用运行在后台（未挂起）并且系统由于一些原因需要终止它的时候该方法被调用。</p>
+
+<p>此方法调用之后，应用也会分发 UIApplicationWillTerminateNotification 通知给需要使用的对象。</p>
+
+<h1 id="原文">原文</h1>
+<p><a href="https://developer.apple.com/library/content/documentation/iPhone/Conceptual/iPhoneOSProgrammingGuide/TheAppLifeCycle/TheAppLifeCycle.html#//apple_ref/doc/uid/TP40007072-CH2-SW1">App Programming Guide for iOS － Execution States for Apps</a></p>
+
+<h1 id="后记">后记</h1>
+<p>闲暇时间翻译 Apple 文档，不当之处请指教。</p>
+
+</section>
+        	</article>
+		</div>
+	</div>
+</body>
+
+</html>

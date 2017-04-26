@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="google-site-verification" content="xFcvMZq5Xxvttne4BMyC276ExgD_GG5GUfEjKg2S1a8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="凭自己的能力去赢得一场胜利
+">
+    <meta name="keywords"  content="谷雷雷, iOS, acumen, 咕噜噜, acumen1005, 互联网, 移动端技术">
+    <link rel="stylesheet" type="text/css" href="/media/css/main.css">
+    <link rel="stylesheet" type="text/css" href="/media/css/rouge.css">
+    <link rel="stylesheet" type="text/css" href="/media/css/syntax.css">    
+    <link rel="stylesheet" type="text/css" href="/media/css/bootstrap.css">
+
+    <!-- <link rel="shortcut icon" href="/img/favicon.ico"> -->
+
+    <title>无缝链接 Universal Links - acumen 的博客 | acumen Blog</title>
+
+    <script></script>
+</head>
+
+
+<!-- hack iOS CSS :active style -->
+<body ontouchstart="">
+	<div id="container">
+		<div id="main" role="main">
+			<header>
+				<h1>无缝链接 Universal Links</h1>
+			</header>
+			<nav>
+				<p><a title="home" href="/">home</a></p>
+				<p><a title="about" href="/about/">about</a></p>
+				<p><a title="links" href="/links/">links</a></p>
+			</nav>
+			<article class="content">
+        		<section class="post">
+<p>Apple 在 iOS9 加入的一个通用链接 (Universal Link) 的深度链接特性，这个特性让我们可以无缝的引导用户到 APP 上，在用户使用时有更好的体验。本文简单的介绍一下什么是通用链接？如何使用这个 iOS9 的特性。</p>
+
+<h2 id="什么是通用链接">什么是通用链接？</h2>
+<p>Apple 推出的通用链接：</p>
+<blockquote>
+  <p>一种能够方便的通过传统 HTTP 链接来启动 APP, 使用相同的网址打开网站和 APP。</p>
+</blockquote>
+
+<p>通过唯一的 URL，不需要特殊的 schema 就可以链接一个指定的视图到 APP 里。比如：我们在淘宝中使用了通用链接，用户在 Safari、webView 等控件中点击一个链接，如果这个链接是在我们所指定通用链接内的，那么我们的 iOS 设备就会启动淘宝 APP 并且跳转的到指定的视图页面，如果没有安装则会在 Safari 中响应该链接。</p>
+
+<p>集成通用链接三个步骤：</p>
+
+<ul>
+  <li>创建一个包含 json 数据的 apple-app-site-association 文件</li>
+  <li>把 apple-app-site-association 文件上传到服务器的根目录</li>
+  <li>在 APP 里处理通用链接</li>
+</ul>
+
+<h2 id="universal-links-的好处">Universal Links 的好处</h2>
+<p>与 URL Scheme 相比，两者都能唤醒 APP。URL Scheme 因为是自己定义的协议，所以在没有安装 APP 的情况下。无法直接打开。但是 Universal Link 就不同了。</p>
+
+<ul>
+  <li>Universal Link 本身是一个 HTTP/HTTPS 的链接。如果没有安装 APP，默认打开 safari，体验更加流畅</li>
+  <li>不同的 APP 定义 URL Scheme，可能会出现冲突。当时 Universal Link 在 server 端维护一个 apple-app-site-association 文件。其中 appID 字段来标示 APP。就不存在上面的问题。</li>
+  <li>Universal Link 支持在 SFSafariViewController、UIWebView 和 WKWebView 跳转 APP</li>
+  <li>Universal Link 可以被搜索引擎索引。web 和 app 页面存在一个自定义的映射关系。</li>
+</ul>
+
+<h2 id="如何集成通用链接">如何集成通用链接？</h2>
+
+<h4 id="1-创建一个-apple-app-site-association-文件">1. 创建一个 apple-app-site-association 文件</h4>
+<div class="language-json highlighter-rouge"><pre class="highlight"><code><span class="w">  </span><span class="p">{</span><span class="w">
+      </span><span class="nt">"applinks"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+          </span><span class="nt">"apps"</span><span class="p">:</span><span class="w"> </span><span class="p">[],</span><span class="w">
+          </span><span class="nt">"details"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w">
+              </span><span class="p">{</span><span class="w">
+                  </span><span class="nt">"appID"</span><span class="p">:</span><span class="w"> </span><span class="s2">"9JA89QQLNQ.com.apple.wwdc"</span><span class="p">,</span><span class="w">
+                  </span><span class="nt">"paths"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w"> </span><span class="s2">"/wwdc/news/"</span><span class="p">,</span><span class="w"> </span><span class="s2">"/videos/wwdc/2015/*"</span><span class="w"> </span><span class="p">]</span><span class="w">
+              </span><span class="p">},</span><span class="w">
+              </span><span class="p">{</span><span class="w">
+                  </span><span class="nt">"appID"</span><span class="p">:</span><span class="w"> </span><span class="s2">"teamID.BundleID"</span><span class="p">,</span><span class="w">
+                  </span><span class="nt">"paths"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w"> </span><span class="s2">"*"</span><span class="w"> </span><span class="p">]</span><span class="w">
+              </span><span class="p">}</span><span class="w">
+          </span><span class="p">]</span><span class="w">
+      </span><span class="p">}</span><span class="w">
+  </span><span class="p">}</span><span class="w">
+</span></code></pre>
+</div>
+<p>根据 json 数据中的 paths 字段来设定允许的路径，或者用 <code class="highlighter-rouge">*</code> 来表示任何路径都被允许，也就是我们可以使用任何链接打开 APP。</p>
+
+<p><em>hint：paths 中路径是大小敏感的</em></p>
+
+<p>其中 appID 字段的内容是 teamID + bundleID 来唯一确定 APP，中 teamID 需要在苹果开发者帐号中查看。bundleID 直接打开项目在 general 中查看。</p>
+
+<h4 id="2-上传-apple-app-site-association-文件到服务器">2. 上传 apple-app-site-association 文件到服务器</h4>
+<p>需要注意的是 apple-app-site-association 文件要放在服务器的根目录下，并且该服务器是支持 HTTPS 的，不支持重定向，也就是说我们需要直接去访问 <code class="highlighter-rouge">https://&lt;domain&gt;/apple-app-site-association</code> 。通过这个 URL 我们发现对于 apple-app-site-association 文件我们不需要 <code class="highlighter-rouge">.json</code> 这样的后缀，虽然文件内包含的是 json 格式的数据。
+一切都准备好了，我们就可以测试通用链接的特性了，在记事本或者短信中输入一个 URL 并点击如果跳转到你的 APP。那么就已经成功了。Apple 还提供了一个 <a href="https://search.developer.apple.com/appsearch-validation-tool/">网站</a> 来检测通用链接是否可用。</p>
+
+<h4 id="3-在-app-里处理通用链接">3. 在 APP 里处理通用链接</h4>
+<p>在 APP 里处理通用链接，需要在 AppDelegate 里实现 <code class="highlighter-rouge">application(_:continueUserActivity:restorationHandler:)</code> 。很多其他功能的实现也是通过实现该代理方法，比如 spotlight 等。我们可以判断 userActivity 的 activityType 属性来确定是哪一种操作。</p>
+<div class="language-ruby highlighter-rouge"><pre class="highlight"><code><span class="k">if</span><span class="err"> </span><span class="n">userActivity</span><span class="p">.</span><span class="nf">activityType</span><span class="err"> </span><span class="o">==</span><span class="err"> </span><span class="no">NSUserActivityTypeBrowsingWeb</span><span class="err"> </span><span class="p">{</span>
+	<span class="sr">//</span> <span class="n">coding</span> <span class="n">to</span> <span class="n">handle</span><span class="p">.</span><span class="nf">.</span><span class="o">.</span>
+<span class="p">}</span>
+</code></pre>
+</div>
+<p>在该方法里路由 userActivity.webpageURL，也就是通过用户点击的链接来路由到指定的视图。</p>
+
+<h2 id="总结一下坑点">总结一下坑点</h2>
+<ol>
+  <li>点击一个链接打开 APP 的之后 <em>右上角出现一个箭头</em>， 点击之后就会返回到 Safari 相应的页面。这里有个巨坑就是之后你会发现：你再点链接就不会跳转到 APP 了。这时候只有通过 3D Touch (6s 以上) 出现一个 ActionSheet，选择 <code class="highlighter-rouge">在 "XXX" 中打开</code> ，之后点击链接就又可以跳转到 APP 了。这里 Apple 的设计猜想是兼顾到 safari 打开链接吧，点击了右上角的箭头代表了你不想跳转到 APP 所以下次就直接用 safari 打开了。换句话说，就是 Apple 会记住上次的操作。还有在配置 apple-app-site-association 文件的 <code class="highlighter-rouge">paths</code> 字段的时候不要太暴力的用 <code class="highlighter-rouge">*</code>，如果 <code class="highlighter-rouge">route/a/*</code> 和 <code class="highlighter-rouge">route/b/*</code> 要比 <code class="highlighter-rouge">route/*</code> 要好。系统记住操作是根据 paths 来的。比如 <code class="highlighter-rouge">route/a/*</code> 用 safari 打开了，但是 <code class="highlighter-rouge">route/b/*</code>  这样的路径还是会跳转 APP，如果是 <code class="highlighter-rouge">route/*</code> 的话就一棒子打死了。</li>
+  <li>safari 中是无法直接跳转到 APP 的。在 safari 输入一个链接之后，再下滑，会看到 <code class="highlighter-rouge">在 “xxx” 应用中打开</code> 这个一个 banner。点击跳转到 APP。如果你的页面会重定向到 H5 的话，记得将 domain 加入到 Associated Domains 中。</li>
+</ol>
+
+<h2 id="总结">总结</h2>
+
+<p>上面所提及到的通用链接是深度链接（deep link）的一种表现形式，其基本的思想就是系统通过拦截和解析 HOST 地址，与系统注册的 HOST 进行匹配，如果发现就可以直接打开APP，之后的 URL 路由问题由 AppDelegate 代理方法来完成。
+对于现在移动互联网时代，搜索引擎是无法搜索到 APP 内容数据，因此搜索引擎公司希望能够建立 web 和 APP 之间的关系索引，对于百度/google 等提供技术支持和相应的接口，让 APP 开发者提交 Web 和 APP 的映射关系。这样移动用户可以直接打开 APP，提交用户体验。</p>
+
+<p>值得注意的是对于 apple-app-site-association 文件的 json 数据中的 paths 字段有许多规则：</p>
+
+<ul>
+  <li>“NOT /videos/wwdc/2010/*” 不处理含有 videos/wwdc/2010 前缀的路径</li>
+  <li>“/videos/wwdc/201?/*” 用 ? 来表示任意的单个字符</li>
+</ul>
+
+<h2 id="参考">参考</h2>
+<p><a href="http://stackoverflow.com/questions/32751225/ios9-universal-links-does-not-work/32751734#32751734">iOS9: Universal Links does not work</a> <br />
+<a href="http://tech.glowing.com/cn/deferred-deep-linking-and-branch-sdk-in-ios/">Deferred Deep Linking in iOS</a> <br />
+<a href="https://developer.apple.com/library/content/documentation/General/Conceptual/AppSearch/UniversalLinks.html">Apple:Support Universal Links</a></p>
+
+
+</section>
+        	</article>
+		</div>
+	</div>
+</body>
+
+</html>

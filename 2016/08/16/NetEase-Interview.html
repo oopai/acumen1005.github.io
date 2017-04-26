@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="google-site-verification" content="xFcvMZq5Xxvttne4BMyC276ExgD_GG5GUfEjKg2S1a8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="凭自己的能力去赢得一场胜利
+">
+    <meta name="keywords"  content="谷雷雷, iOS, acumen, 咕噜噜, acumen1005, 互联网, 移动端技术">
+    <link rel="stylesheet" type="text/css" href="/media/css/main.css">
+    <link rel="stylesheet" type="text/css" href="/media/css/rouge.css">
+    <link rel="stylesheet" type="text/css" href="/media/css/syntax.css">    
+    <link rel="stylesheet" type="text/css" href="/media/css/bootstrap.css">
+
+    <!-- <link rel="shortcut icon" href="/img/favicon.ico"> -->
+
+    <title>Netease First Interview - acumen 的博客 | acumen Blog</title>
+
+    <script></script>
+</head>
+
+
+<!-- hack iOS CSS :active style -->
+<body ontouchstart="">
+	<div id="container">
+		<div id="main" role="main">
+			<header>
+				<h1>Netease First Interview</h1>
+			</header>
+			<nav>
+				<p><a title="home" href="/">home</a></p>
+				<p><a title="about" href="/about/">about</a></p>
+				<p><a title="links" href="/links/">links</a></p>
+			</nav>
+			<article class="content">
+        		<section class="post">
+<p>记6月12日第一次面试，感谢网易邮件事业部给我这次面试机会。
+对于面试的总体情况：两位面试官对于iOS理解都非常深，所提问的问题有基础的也有比较深入的，总体感觉自己对于iOS的知识体系和最新的技术了解的还不够，或者也可以说知识面比较狭窄，导致二面挂了，其实也在意料之中，对此做出总结，作为后事之师</p>
+
+<p>以下面试问题顺序没有按面试问题顺序</p>
+
+<h1 id="一面">一面</h1>
+
+<ul>
+  <li>Runloop的三种Mode<br />
+面试官：对Tracking模式的理解<br />
+我大概回答了Runloop的三种模式，default，track，common三种模式，然后讲了一个timer在scrollView滑动时计时器会产生误差，原因就是在创建一个timer并添加在到default模式时，timer会反复的回调，在scrollView滑动时，Runloop会将Mode切换track模式，这是当然timer也就不回调了。解决办法就是可以讲timer加到default和track两个模式里 或者 将timer加入到runloop的common模式中<br />
+当时其实对track模式不是很理解，面试结束之后查了一下，才发现其实上面解释的就是track模式的一个例子。</li>
+</ul>
+
+<blockquote>
+  <p>其实每个线程内部对应一个runloop对象用来处理输入事件，处理的事件。Runloop有default，track，common，initialization四种模式。default是runloop的默认状态，空闲状态。track是追踪scrollView的滑动状态。common是Mode都得一个集合（包括了delfault，track，initialization几种Mode），initialization是启动时的状态。</p>
+</blockquote>
+
+<ul>
+  <li>CI（持续集成）<br />
+面试官：有没有做过CI<br />
+我说大概了解过 持续集成，可以保证提交代码的质量，对于大项目来说其实是一劳永逸的事情。</li>
+</ul>
+
+<blockquote>
+  <p>现在做iOS持续集成环境的Jenkins/Travis CI + github/gitlab + Xcode + fir。大部分CI环境都可以根据需求来，比较完善的可以做到自动地 check 代码的变化，自动 build，自动做集成测试和场景测试等，自动部署到生产环境。以上说的都是空话，主要是实践。完成之后写一套这个的blog。</p>
+</blockquote>
+
+<ul>
+  <li>https原理<br />
+面试官：讲讲HTTPS原理<br />
+对于https我只是了解它比HTTP要安全。</li>
+</ul>
+
+<blockquote>
+  <p>https其实是由HTTP＋SSL/TLS组成，也就是在HTTP上加了一层处理加密的模块，客户端和服务端都会通过TLS加密，所以在传输的数据都是加密后的数据。<br />
+1.客户端发起HTTPS请求：输入一个https网址，然后连接到server的443端口<br />
+2.服务器的配置：服务器必须要有一套数字证书（可以自己制作，也可以向组织申请，区别就是自己颁发的证书需要客户端验证通过，才可以继续访问，而使用受信任的公司申请的证书则不会弹出提示页面，eg：startSSL）其中的证书其实就是一对公钥和私钥。<br />
+3.传送证书：这个证书其实就是公钥，只是包含了很多信息，如证书的颁发机构，过期时间等等。<br />
+4.客户端解析证书：这部分工作有TLS来完成，首先验证公钥是否有效，生成一个随机数，然后用证书对该随机数加密。<br />
+5.传输加密信息：传输证书加密后的随机数，让服务端得到这个随机数，客户端和服务端通信就可以通过这个随机数来进行加解密。<br />
+6.服务端加密信息：服务端用私钥解密后，得到客户端传来的随机数，然后把内容进行对称加密（所谓对称加密就是，将信息和私钥通过某种算法混合在一起，这样除非知道私钥，不然无法获取内容）<br />
+7.传输加密后的信息：服务端用私钥加密后的信息，可以在客户端还原。<br />
+8.客户端解密：客户端用之前生成的私钥解密服务段传过来的信息。</p>
+</blockquote>
+
+<ul>
+  <li>OC中的锁<br />
+面试官：讲讲OC中的锁<br />
+我只知道一个NSLock</li>
+</ul>
+
+<blockquote>
+  <p>锁是线程同步工具的基础，POSIX互斥锁（pthread是一个纯C的线程库），NSLock类，@synchronized（@synchronized{}指令），NSRecursiveLock类（递归锁，同一线程多次获得，而不会造成死锁，只有解锁和加锁平衡锁才被释放），NSConditionLock类（互斥锁），NSDistributedLock类。</p>
+</blockquote>
+
+<ul>
+  <li>iOS程序文件目录</li>
+</ul>
+
+<blockquote>
+  <p>Documents 所有de应用程序数据文件写入到这个目录下。
+Library 这个目录下有两个子目录：Caches 和 Preferences<br />
+    Preferences 包含应用程序的偏好设置文件。您不应该直接创建偏好设置文件，而是应该使用NSUserDefaults类来取得和设置应用程序的偏好。<br />
+    Caches 用于存放应用程序专用的支持文件，保存应用程序再次启动过程中需要的信息。<br />
+tmp 存放临时文件的目录</p>
+</blockquote>
+
+<ul>
+  <li>applicationWillTerminate的解读</li>
+  <li>app的生命周期</li>
+</ul>
+
+<blockquote>
+  <p>iOS的应用程序一共有5种状态</p>
+  <ol>
+    <li>Not running（未运行）：程序未启动</li>
+    <li>Inactive（未激活）：其他两个状态切换时出现的短暂状态。唯一在此状态停留时间比较长的情况是：当用户锁屏时？或者系统提示用户去响应Alert窗口（如来电、信息）时。</li>
+    <li>Active（激活）：在屏幕上显示的正常运行状态。</li>
+    <li>Backgroud（后台）：程序在后台且能执行代码。用户按下Home键不久后进入此状态（先进入了Inactive状态，再进入Background状态），然后会迅速进入挂起状态(Suspended)。有的程序经过特殊的请求后可以长期处于Backgroud状态。</li>
+    <li>Suspended（挂起）：程序在后台不能执行代码。普通程序在进入Background状态不久后就会进入此状态。当挂起时，程序还是停留在内存中的，当系统内存低时，系统就把挂起的程序清除掉，为前台程序提供更多的内存。
+###appdelegate里的几个回调函数：</li>
+    <li>application:didFinishLaunchingWithOptions: 程序首次已经完成启动时执行，若直接启动，launchOptions中没有数据；否则，launchOptions将包含对应方式的内容</li>
+    <li>applicationWillResignActive（将进入后台）程序将要失去Active状态时调用，比如按下Home键或有电话信息进来。对应applicationWillEnterForeground（将进入前台）</li>
+    <li>applicationDidEnterBackground（已经进入后台）程序已经进入后台时调用，对应applicationDidBecomeActive（已经变成前台。</li>
+    <li>applicationWillTerminate 程序即将退出时调用</li>
+  </ol>
+</blockquote>
+
+<ul>
+  <li>OC与js交互</li>
+</ul>
+
+<blockquote>
+  <p>OC调用js中的方法：</p>
+  <ul>
+    <li>(NSString *)stringByEvaluatingJavaScriptFromString:(NSString *)script
+js调用OC中的方法：</li>
+  </ul>
+</blockquote>
+
+<ul>
+  <li>值类型和引用类型的区别</li>
+</ul>
+
+<blockquote>
+  <p>简单的说就是 值类型内存分配在栈上，引用类型分配在堆上。引用类型类似于指针。</p>
+</blockquote>
+
+<ul>
+  <li>有没有用过runtime</li>
+</ul>
+
+<blockquote>
+  <p>主要是系统运行时候的一些机制，主要是消息机制。在C语言中，编译器会决定调用哪个函数，编译完成之后直接顺序执行，无任何二义性。OC的函数调用其实是消息发送，在OC的编译时候不能确定调用哪个函数，只有在正真运行的时候才会根据SEL来调用对应的函数。 
+<br /> <br />编译器将代码[obj makeText];转化为objc_msgSend(obj, @selector (makeText));，在objc_msgSend函数中。首先通过obj的isa指针找到obj对应的class。在Class中先去[struct objc_cache *cache]中 通过SEL查找对应函数method（猜测cache中method列表是以SEL为key通过hash表来存储的，这样能提高函数查找速度），若 cache中未找到。再去methodList中查找，若methodlist中未找到，则取superClass中查找。若能找到，则将method加 入到cache中，以方便下次查找，并通过method中的函数指针跳转到对应的函数中去执行。</p>
+</blockquote>
+
+<ul>
+  <li>
+    <p>推送（apns）的原理</p>
+  </li>
+  <li>
+    <p>OC中的4种枚举效率</p>
+  </li>
+</ul>
+
+<blockquote>
+  <p>OC中有四种遍历数组的方式：<br />
+1.普通for循环。 容易进行指定下标的操作，反向遍历。<br />
+2.for－in（快速枚举） 效率比较高<br />
+3.enumerateObjectsUsingBlock^(id obj, NSUInteger idx, BOOLBOOL *stop) {} 下标，对象，停止等参数都有，可控性高，使用enumerateObjectsWithOptions:usingBlock:也可以实现反向遍历。<br />
+4.枚举器：NSEnumerator类似Java和C++中的迭代器<br />
+while (enumerator.nextObject) { }<br />
+###结论：粗略的得出的结论(不精确的):Time(for-in) &lt; Time(enumerator) &lt; Time(block) &lt; Time(for)</p>
+</blockquote>
+
+<ul>
+  <li>几种客户端加密算法</li>
+</ul>
+
+<blockquote>
+  <p>1.通过简单的URLENCODE ＋ BASE64编码防止数据明文传输<br />
+2.对普通请求、返回数据，生成MD5校验（MD5中加入动态密钥），进行数据完整性（简单防篡改，安全性较低，优点：快速）校验。<br />
+3.对于重要数据，使用RSA进行数字签名，起到防篡改作用。<br />
+4.对于比较敏感的数据，如用户信息（登陆、注册等），客户端发送使用RSA加密，服务器返回使用DES(AES)加密。<br />
+原因：客户端发送之所以使用RSA加密，是因为RSA解密需要知道服务器私钥，而服务器私钥一般盗取难度较大；如果使用DES的话，可以通过破解客户端获取密钥，安全性较低。而服务器返回之所以使用DES，是因为不管使用DES还是RSA，密钥（或私钥）都存储在客户端，都存在被破解的风险，因此，需要采用动态密钥，而RSA的密钥生成比较复杂，不太适合动态密钥，并且RSA速度相对较慢，所以选用DES）<br />
+以上是摘录其他人的一个客户端安全机制，还可以通过_所有的网络数据请求通过https来完成_达到安全。</p>
+</blockquote>
+
+<ul>
+  <li>AFN网络框架</li>
+</ul>
+
+<blockquote>
+  <p>AFNetworking是对NSURLSession的高层封装</p>
+</blockquote>
+
+<ul>
+  <li>对iOS系统的有什么apple尚未解决的问题</li>
+</ul>
+
+<blockquote>
+  <p>待续</p>
+</blockquote>
+
+<ul>
+  <li>wwdc发布的iOS10.0新特性的了解</li>
+</ul>
+
+<blockquote>
+  <p>待续</p>
+</blockquote>
+
+<ul>
+  <li>项目总用到的数据持久化框架</li>
+</ul>
+
+<blockquote>
+  <p>待续</p>
+</blockquote>
+
+<p>这次面试还是比较遗憾的，但也感受到一个高水平的开发者对于他们领域技术的热爱和深入的了解。走出去看看才知道我自己很多方面的不足。道阻且长。</p>
+
+
+</section>
+        	</article>
+		</div>
+	</div>
+</body>
+
+</html>

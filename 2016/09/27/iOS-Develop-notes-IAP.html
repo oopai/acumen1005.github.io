@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="google-site-verification" content="xFcvMZq5Xxvttne4BMyC276ExgD_GG5GUfEjKg2S1a8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="凭自己的能力去赢得一场胜利
+">
+    <meta name="keywords"  content="谷雷雷, iOS, acumen, 咕噜噜, acumen1005, 互联网, 移动端技术">
+    <link rel="stylesheet" type="text/css" href="/media/css/main.css">
+    <link rel="stylesheet" type="text/css" href="/media/css/rouge.css">
+    <link rel="stylesheet" type="text/css" href="/media/css/syntax.css">    
+    <link rel="stylesheet" type="text/css" href="/media/css/bootstrap.css">
+
+    <!-- <link rel="shortcut icon" href="/img/favicon.ico"> -->
+
+    <title>内购（in-app purchase）问题 - acumen 的博客 | acumen Blog</title>
+
+    <script></script>
+</head>
+
+
+<!-- hack iOS CSS :active style -->
+<body ontouchstart="">
+	<div id="container">
+		<div id="main" role="main">
+			<header>
+				<h1>内购（in-app purchase）问题</h1>
+			</header>
+			<nav>
+				<p><a title="home" href="/">home</a></p>
+				<p><a title="about" href="/about/">about</a></p>
+				<p><a title="links" href="/links/">links</a></p>
+			</nav>
+			<article class="content">
+        		<section class="post">
+<h1 id="内购介绍">内购介绍</h1>
+<blockquote>
+  <p>With the StoreKit framework, you can offer in-app purchases to sell a variety of items — including premium content, virtual goods, and subscriptions — directly from within your app.（来自Apple官方文档）</p>
+</blockquote>
+
+<p>大致的意思：使用StoreKit框架，你可以直接在你的app销售各种项目－包括优质的内容，虚拟商品和订阅类物品.</p>
+
+<blockquote>
+  <p>In-App Purchase allows you to embed a store inside your app using the Store Kit framework. This framework connects to the App Store on your app’s behalf to securely process payments from users, prompting them to authorize payment. The framework then notifies your app, which provides the purchased items to users. Use In-App Purchase to collect payment for additional features and content.（来自Apple官方文档）</p>
+</blockquote>
+
+<p><img src="../../../../img/post/IAP-1.png" alt="img" /></p>
+
+<p>大致的意思：内购允许你使用StoreKit框架在你的应用中嵌入一个商店（当然，不是真实的商店），StoreKit框架支持安全的支付并且提示用户授权支付。然后这个框架通知你的app（提供购买项目的app）。</p>
+
+<p>需要注意的一点：首先要确定一点你的app中需要内购的项目是否符合内购的要求。内购的商品严格的要求其实就是要满足－<code class="highlighter-rouge">虚拟商品，比如：游戏的关卡、视频等</code>。其实对于<code class="highlighter-rouge">实物，比如：衣服，键盘等</code>其实可以直接集成第三方的支付方式，比如：支付宝，微信等。</p>
+
+<h1 id="集成内购">集成内购</h1>
+
+<h3 id="1准备工作证书itunnes-connect中的一些协议问题等">1.准备工作：证书、iTunnes Connect中的一些协议问题等</h3>
+
+<h5 id="11-证书颁发"><strong><em>1.1 证书颁发</em></strong></h5>
+<p><code class="highlighter-rouge">https://developer.apple.com</code> 按照正常的证书发布流程，注意的就是在 <code class="highlighter-rouge">选择App需要支持的服务</code> 的时候要注意下 <code class="highlighter-rouge">In-App Purchase</code> 要勾选起来。</p>
+
+<p><img src="../../../../img/post/IAP-3.png" alt="img" /></p>
+
+<h5 id="12-完成itunnes-connect一些协议的签约"><strong><em>1.2 完成iTunnes Connect一些协议的签约</em></strong></h5>
+
+<p><img src="../../../../img/post/IAP-2.png" alt="img" /><br />
+上面的图片来自<a href="https://developer.apple.com/library/content/documentation/LanguagesUtilities/Conceptual/iTunesConnectInAppPurchase_Guide/Chapters/Introduction.html#//apple_ref/doc/uid/TP40013727">官方文档In-App Purchase Configuration Guide for iTunes Connect</a><br />
+大致的意思：<br />
+前提条件</p>
+
+<ul>
+  <li>
+    <p>最新Apple开发者程序许可协议</p>
+  </li>
+  <li>
+    <p>最新的app支付合同</p>
+  </li>
+  <li>
+    <p>一个有合适角色的iTunes Connect账户</p>
+  </li>
+  <li>
+    <p>在iTunes Connect里有该app的纪录</p>
+  </li>
+</ul>
+
+<p>其实主要的想讲的是1，2两点。</p>
+
+<p>在这次的集成内购中正好赶上了Apple发布了新的开发者程序许可协议，这里只需要同意协议就好了。</p>
+
+<p><code class="highlighter-rouge">协议、税务和银行业务</code> 在iTunes Connect了request最新的就ok了。</p>
+
+<p><img src="../../../../img/post/IAP-4.png" alt="img" /></p>
+
+<p><em>注意：上面提到的两点没有完成的话，在下面添加内购商品的时候会出现 <code class="highlighter-rouge">创建按钮</code> 是灰色的</em></p>
+
+<p><img src="../../../../img/post/IAP-5.png" alt="img" /></p>
+
+<h3 id="2添加内购商品">2.添加内购商品</h3>
+<p>内购商品可以分为三大类：消耗型项目、非消耗型项目、订阅项目。</p>
+
+<p>按照iTunes Connect的引导流程来就可以了。</p>
+
+<p><em>注意：添加完成之后，内购商品有个ProductId是程序所需要的</em></p>
+
+<h3 id="3移动端的程序部分">3.移动端的程序部分</h3>
+<p>我们主要关注你的这一部分。</p>
+
+<p>导入头文件：<code class="highlighter-rouge">#import &lt;StoreKit/StoreKit.h&gt;</code></p>
+
+<h5 id="31-检查app是否允许内购"><strong><em>3.1 检查app是否允许内购</em></strong></h5>
+
+<div class="language-ruby highlighter-rouge"><pre class="highlight"><code>	<span class="k">if</span><span class="p">([</span><span class="no">SKPaymentQueue</span> <span class="n">canMakePayments</span><span class="p">]){</span>  
+        <span class="p">[</span><span class="nb">self</span> <span class="n">requestWithProductId</span><span class="ss">:productId</span><span class="p">];</span>  
+    <span class="p">}</span><span class="k">else</span><span class="p">{</span>  
+        <span class="no">NSLog</span><span class="p">(</span><span class="err">@</span><span class="s2">"该app不允许内购"</span><span class="p">);</span>  
+    <span class="p">}</span> 
+</code></pre>
+</div>
+
+<h5 id="32-向app-store请求商品信息"><strong><em>3.2 向app Store请求商品信息</em></strong></h5>
+
+<div class="language-ruby highlighter-rouge"><pre class="highlight"><code>	<span class="o">-</span> <span class="p">(</span><span class="n">void</span><span class="p">)</span><span class="n">requestWithProductId</span><span class="p">:(</span><span class="no">NSString</span> <span class="o">*</span><span class="p">)</span><span class="n">productId</span><span class="p">{</span>   
+	
+    <span class="no">NSSet</span> <span class="o">*</span> <span class="n">set</span> <span class="o">=</span> <span class="p">[</span><span class="no">NSSet</span> <span class="n">setWithArray</span><span class="p">:</span><span class="err">@</span><span class="p">[</span><span class="n">productId</span><span class="p">]];</span>
+    <span class="no">SKProductsRequest</span> <span class="o">*</span> <span class="n">request</span> <span class="o">=</span> <span class="p">[[</span><span class="no">SKProductsRequest</span> <span class="n">alloc</span><span class="p">]</span> <span class="n">initWithProductIdentifiers</span><span class="ss">:set</span><span class="p">];</span>
+    <span class="n">request</span><span class="p">.</span><span class="nf">delegate</span> <span class="o">=</span> <span class="nb">self</span><span class="p">;</span>
+    <span class="p">[</span><span class="n">request</span> <span class="n">start</span><span class="p">];</span>
+<span class="p">}</span> 
+</code></pre>
+</div>
+
+<div class="language-ruby highlighter-rouge"><pre class="highlight"><code>	<span class="sr">//</span> <span class="err">请求的回调函数</span>
+<span class="o">-</span> <span class="p">(</span><span class="n">void</span><span class="p">)</span><span class="n">productsRequest</span><span class="p">:(</span><span class="no">SKProductsRequest</span> <span class="o">*</span><span class="p">)</span><span class="n">request</span> <span class="n">didReceiveResponse</span><span class="p">:(</span><span class="no">SKProductsResponse</span> <span class="o">*</span><span class="p">)</span><span class="n">response</span> <span class="p">{</span>
+    <span class="no">NSArray</span> <span class="o">*</span><span class="n">products</span> <span class="o">=</span> <span class="n">response</span><span class="p">.</span><span class="nf">products</span><span class="p">;</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">myProduct</span><span class="p">.</span><span class="nf">count</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+        
+        <span class="no">NSLog</span><span class="p">(</span><span class="err">@</span><span class="s2">"无法获取产品信息，购买失败。"</span><span class="p">);</span>
+        <span class="k">return</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="no">SKMutablePayment</span> <span class="o">*</span> <span class="n">payment</span> <span class="o">=</span> <span class="p">[</span><span class="no">SKMutablePayment</span> <span class="ss">paymentWithProduct: </span><span class="n">products</span><span class="p">[</span><span class="mi">0</span><span class="p">]];</span>
+    <span class="sr">//</span><span class="err">添加数量</span>
+    <span class="n">payment</span><span class="p">.</span><span class="nf">quantity</span> <span class="o">=</span> <span class="mi">2</span><span class="p">;</span>
+    <span class="p">[[</span><span class="no">SKPaymentQueue</span> <span class="n">defaultQueue</span><span class="p">]</span> <span class="n">addPayment</span><span class="ss">:payment</span><span class="p">];</span>
+<span class="p">}</span>
+	<span class="sr">//</span> <span class="err">请求结束的回调函数</span>
+<span class="o">-</span> <span class="p">(</span><span class="n">void</span><span class="p">)</span><span class="n">requestDidFinish</span><span class="p">:(</span><span class="no">SKRequest</span> <span class="o">*</span><span class="p">)</span><span class="n">request</span> <span class="p">{</span>
+    
+<span class="p">}</span>
+</code></pre>
+</div>
+
+<h5 id="33-添加观察者"><strong><em>3.3 添加观察者</em></strong></h5>
+
+<div class="language-ruby highlighter-rouge"><pre class="highlight"><code>	<span class="sr">//</span> <span class="err">在支付页面添加监听购买结果</span>
+    <span class="p">[[</span><span class="no">SKPaymentQueue</span> <span class="n">defaultQueue</span><span class="p">]</span> <span class="n">addTransactionObserver</span><span class="ss">:self</span><span class="p">];</span>
+
+</code></pre>
+</div>
+
+<div class="language-ruby highlighter-rouge"><pre class="highlight"><code>	<span class="sr">//</span><span class="err">在各自的状态添加相应的操作</span>
+	<span class="o">-</span> <span class="p">(</span><span class="n">void</span><span class="p">)</span><span class="n">paymentQueue</span><span class="p">:(</span><span class="no">SKPaymentQueue</span> <span class="o">*</span><span class="p">)</span><span class="n">queue</span> <span class="n">updatedTransactions</span><span class="p">:(</span><span class="no">NSArray</span> <span class="o">*</span><span class="p">)</span><span class="n">transactions</span> <span class="p">{</span>
+    <span class="k">for</span> <span class="p">(</span><span class="no">SKPaymentTransaction</span> <span class="o">*</span><span class="n">transaction</span> <span class="k">in</span> <span class="n">transactions</span><span class="p">)</span> <span class="p">{</span>
+    
+        <span class="n">switch</span> <span class="p">(</span><span class="n">transaction</span><span class="p">.</span><span class="nf">transactionState</span><span class="p">)</span> <span class="p">{</span>
+         
+            <span class="k">case</span> <span class="no">SKPaymentTransactionStatePurchased</span><span class="p">:</span> <span class="sr">//</span><span class="err">交易完成</span>
+                <span class="no">NSLog</span><span class="p">(</span><span class="err">@</span><span class="s2">"transactionIdentifier = %@"</span><span class="p">,</span> <span class="n">transaction</span><span class="p">.</span><span class="nf">transactionIdentifier</span><span class="p">);</span>
+                <span class="p">[</span><span class="nb">self</span> <span class="n">completeTransaction</span><span class="ss">:transaction</span><span class="p">];</span>
+                <span class="k">break</span><span class="p">;</span>
+            <span class="k">case</span> <span class="no">SKPaymentTransactionStateFailed</span><span class="p">:</span> <span class="sr">//</span><span class="err">交易失败</span>
+                <span class="k">break</span><span class="p">;</span>
+            <span class="k">case</span> <span class="no">SKPaymentTransactionStateRestored</span><span class="p">:</span> <span class="sr">//</span><span class="err">已经购买过该商品</span>
+                <span class="k">break</span><span class="p">;</span>
+            <span class="k">case</span> <span class="no">SKPaymentTransactionStatePurchasing</span><span class="p">:</span> <span class="sr">//</span><span class="err">商品添加进列表</span>
+                <span class="no">NSLog</span><span class="p">(</span><span class="err">@</span><span class="s2">"商品添加进列表"</span><span class="p">);</span>
+                <span class="k">break</span><span class="p">;</span>
+            <span class="ss">default:
+                </span><span class="k">break</span><span class="p">;</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+</div>
+<p>监听用户的支付操作</p>
+
+<div class="language-ruby highlighter-rouge"><pre class="highlight"><code><span class="o">-</span> <span class="p">(</span><span class="n">void</span><span class="p">)</span><span class="n">completeTransaction</span><span class="p">:(</span><span class="no">SKPaymentTransaction</span> <span class="o">*</span><span class="p">)</span><span class="n">transaction</span> <span class="p">{</span>
+    <span class="sr">//</span> <span class="no">Your</span> <span class="n">application</span> <span class="n">should</span> <span class="n">implement</span> <span class="n">these</span> <span class="n">two</span> <span class="nb">methods</span><span class="o">.</span>
+    <span class="no">NSString</span> <span class="o">*</span> <span class="n">productIdentifier</span> <span class="o">=</span> <span class="n">transaction</span><span class="p">.</span><span class="nf">payment</span><span class="p">.</span><span class="nf">productIdentifier</span><span class="p">;</span>
+    <span class="no">NSURL</span> <span class="o">*</span><span class="n">recepitURL</span> <span class="o">=</span> <span class="p">[[</span><span class="no">NSBundle</span> <span class="n">mainBundle</span><span class="p">]</span> <span class="n">appStoreReceiptURL</span><span class="p">];</span>
+    <span class="no">NSData</span> <span class="o">*</span><span class="n">receipt</span> <span class="o">=</span> <span class="p">[</span><span class="no">NSData</span> <span class="n">dataWithContentsOfURL</span><span class="ss">:recepitURL</span><span class="p">];</span>
+    
+    <span class="k">if</span> <span class="p">([</span><span class="n">productIdentifier</span> <span class="n">length</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="o">&amp;&amp;</span> <span class="n">receipt</span><span class="p">)</span> <span class="p">{</span>
+        
+        <span class="sr">//</span> <span class="err">向自己的服务器验证购买凭证</span>
+        <span class="p">[</span><span class="nb">self</span> <span class="n">setIapCertificateWithReceipt</span><span class="ss">:receipt</span><span class="p">];</span>
+      
+    <span class="p">}</span>
+    <span class="sr">//</span> 
+    <span class="p">[[</span><span class="no">SKPaymentQueue</span> <span class="n">defaultQueue</span><span class="p">]</span> <span class="ss">finishTransaction: </span><span class="n">transaction</span><span class="p">];</span>
+    
+<span class="c1">#warning 请求购买课程 成功</span>
+<span class="p">}</span>
+
+</code></pre>
+</div>
+
+<p><em>注意：最好是在自己的服务器端完成证购买凭证，只有验证通过了，才会给用户发放 ‘ 道具 ‘</em></p>
+
+<h3 id="4测试部分">4.测试部分</h3>
+
+<p>要在 iTunes Connect 中的 <code class="highlighter-rouge">用户和职能</code> 项目中添加一个沙盒测试员，这样就可以模拟内购的流程。</p>
+
+<h1 id="总结">总结</h1>
+
+<p>在这次的集成中，深刻体会到官方文档的重要性，<code class="highlighter-rouge">前提条件</code> 很重要，遇到 <code class="highlighter-rouge">创建按钮灰色的问题</code> 其实还是挺纳闷的，网上的资料也没有很强调 <em>添加商品</em> 和 <em>签约协议</em> 的顺序，现在回头想其实， <em>签约协议</em> 本应该就在 <em>添加商品</em> 之前认为是一个很正常的逻辑，所以没有点出这个顺序吧。对于 <em>内购丢单</em> 的问题暂时还没遇到。</p>
+
+<p>以上翻译捉急，还望读者见谅。</p>
+
+<h1 id="参考">参考</h1>
+
+<p><a href="http://blog.csdn.net/shenjie12345678/article/details/40978977/">iOS应用程序内购/内付费(一)</a><br />
+<a href="http://www.jianshu.com/p/86ac7d3b593a">iOS开发内购全套图文教程</a><br />
+<a href="https://developer.apple.com/in-app-purchase/">官方文档</a></p>
+
+</section>
+        	</article>
+		</div>
+	</div>
+</body>
+
+</html>

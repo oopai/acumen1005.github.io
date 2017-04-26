@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="google-site-verification" content="xFcvMZq5Xxvttne4BMyC276ExgD_GG5GUfEjKg2S1a8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="凭自己的能力去赢得一场胜利
+">
+    <meta name="keywords"  content="谷雷雷, iOS, acumen, 咕噜噜, acumen1005, 互联网, 移动端技术">
+    <link rel="stylesheet" type="text/css" href="/media/css/main.css">
+    <link rel="stylesheet" type="text/css" href="/media/css/rouge.css">
+    <link rel="stylesheet" type="text/css" href="/media/css/syntax.css">    
+    <link rel="stylesheet" type="text/css" href="/media/css/bootstrap.css">
+
+    <!-- <link rel="shortcut icon" href="/img/favicon.ico"> -->
+
+    <title>UnitTest - acumen 的博客 | acumen Blog</title>
+
+    <script></script>
+</head>
+
+
+<!-- hack iOS CSS :active style -->
+<body ontouchstart="">
+	<div id="container">
+		<div id="main" role="main">
+			<header>
+				<h1>UnitTest</h1>
+			</header>
+			<nav>
+				<p><a title="home" href="/">home</a></p>
+				<p><a title="about" href="/about/">about</a></p>
+				<p><a title="links" href="/links/">links</a></p>
+			</nav>
+			<article class="content">
+        		<section class="post">
+<p>以下内容属于个人见解，如有不恰当欢迎指正！</p>
+
+<h1 id="什么叫单元测试">什么叫单元测试</h1>
+<p>对于面向对象来说，最基本的单元是类，对类的测试或者是对类中的方法测试，认为是 <em>单元测试</em> 。类中的方法特指 public 方法或者类方法，私有方法不做测试。
+tip：若私有方法需要测试，那么私有方法一定含有概念性错误。</p>
+
+<h1 id="xcode-的测试框架">xcode 的测试框架</h1>
+
+<h1 id="xctest框架">XCTest框架</h1>
+
+<div class="language-ruby highlighter-rouge"><pre class="highlight"><code><span class="o">-</span> <span class="p">(</span><span class="n">void</span><span class="p">)</span> <span class="n">setUP</span><span class="p">;</span>     <span class="sr">//</span><span class="err">在测试前设置好要测试的方法</span>
+<span class="o">-</span> <span class="p">(</span><span class="n">void</span><span class="p">)</span> <span class="n">tearDown</span><span class="p">;</span>  <span class="sr">//</span><span class="err">在测试后将设置好的要测试的方法拆卸掉或销毁</span>
+<span class="o">-</span> <span class="p">(</span><span class="n">void</span><span class="p">)</span> <span class="n">testXXXX</span><span class="p">;</span>  <span class="sr">//</span><span class="err">测试方法</span>
+</code></pre>
+</div>
+
+<p>其中测试方法的编写时有讲究的：</p>
+
+<ul>
+  <li>测试方法名必须是以test开头</li>
+  <li>测试方法没有返回值（void）</li>
+  <li>测试方法的调用顺序就是方法名字典序 eg：testA,testB。testA调用先于testB</li>
+</ul>
+
+<p>XCTest中的几种断言，加入断言机制是为了使测试更加明确，我们预计程序错误或崩溃的条件，防止程序在运行到该位置时崩溃。</p>
+
+<ul>
+  <li>XCTFail(format…) 生成一个失败的测试；</li>
+  <li>XCTAssertNil(a1, format…)为空判断，a1为空时通过，反之不通过；</li>
+  <li>XCTAssert(expression, format…)当expression求值为TRUE时通过；  <br />
+  …</li>
+</ul>
+
+<p>expression 是在测试的时候确定的一个布尔表达式</p>
+
+<h1 id="测试demo">测试demo</h1>
+
+<ul>
+  <li>异步操作测试</li>
+</ul>
+
+<p>具体通过_XCTestExpection_类和_waitForExpectationsWithTimeout:handler:_方法来实现对异步操作的测试</p>
+
+<div class="language-ruby highlighter-rouge"><pre class="highlight"><code>    <span class="err">－</span><span class="p">(</span><span class="n">void</span><span class="p">)</span><span class="n">testWebPageDownload</span>
+    <span class="p">{</span>
+        <span class="no">XCTestExpectation</span> <span class="o">*</span><span class="n">expectation</span> <span class="o">=</span>
+            <span class="p">[</span><span class="nb">self</span> <span class="n">expectationWithDescription</span><span class="p">:</span><span class="err">@</span><span class="s2">"High Expectations"</span><span class="p">];</span>
+        <span class="p">[</span><span class="nb">self</span><span class="p">.</span><span class="nf">pageLoader</span> <span class="n">requestUrl</span><span class="p">:</span><span class="err">@</span><span class="s2">"acumen1005.github.io"</span>
+                  <span class="n">completionHandler</span><span class="ss">:^</span><span class="p">(</span><span class="no">NSString</span> <span class="o">*</span><span class="n">page</span><span class="p">)</span> <span class="p">{</span>
+                   
+            <span class="sr">//</span><span class="err">请求回调处理</span>
+            <span class="p">[</span><span class="n">expectation</span> <span class="n">fulfill</span><span class="p">];</span>
+        <span class="p">}];</span>
+        <span class="sr">//</span><span class="err">设置预计的超时时间</span>
+        <span class="p">[</span><span class="nb">self</span> <span class="n">waitForExpectationsWithTimeout</span><span class="p">:</span><span class="mi">5</span><span class="o">.</span><span class="mi">0</span> <span class="n">handler</span><span class="ss">:^</span><span class="p">(</span><span class="no">NSError</span> <span class="o">*</span><span class="n">error</span><span class="p">)</span> <span class="p">{</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">error</span><span class="p">)</span> <span class="p">{</span>
+                <span class="no">NSLog</span><span class="p">(</span><span class="err">@</span><span class="s2">"Timeout Error: %@"</span><span class="p">,</span> <span class="n">error</span><span class="p">);</span>
+            <span class="p">}</span>
+        <span class="p">}];</span>
+    <span class="p">}</span>
+</code></pre>
+</div>
+<p>其中框架会预计XCTestExpection在之后的某一时刻被实现。最终的程序完成代码块中的测试代码会调用XCTestExpection类中的fulfill方法来实现期望 
+若是请求时间超过时限，则会调用其error中的代码块，以至于无限制的等待一个无效的请求</p>
+
+<h1 id="辅助测试的第三方框架">辅助测试的第三方框架</h1>
+
+<h1 id="ocmock">OCMock</h1>
+<p>从名字的来看 OCMock 是仿制，伪造的意思，他的功能的确是伪造一个类，来解决测试过程中一些类难以实例化的问题，直接可以通过 mock 来伪造生成，降低系统业务和测试之间耦合</p>
+
+<div class="language-ruby highlighter-rouge"><pre class="highlight"><code><span class="p">.</span><span class="nf">.</span><span class="p">.</span>
+
+<span class="nf">/</span><span class="o">*</span> <span class="n">dynamically</span> <span class="n">create</span> <span class="n">a</span> <span class="n">subclass</span> <span class="n">and</span> <span class="n">use</span> <span class="n">its</span> <span class="n">meta</span> <span class="k">class</span> <span class="n">as</span> <span class="n">the</span> <span class="n">meta</span> <span class="k">class</span>
+ <span class="k">for</span> <span class="n">the</span> <span class="n">mocked</span> <span class="k">class</span> <span class="o">*</span><span class="sr">/
+    Class subclass = OCMCreateSubclass(mockedClass, mockedClass);
+    originalMetaClass = object_getClass(mockedClass);
+    id newMetaClass = object_getClass(subclass);
+
+    /</span><span class="o">*</span> <span class="n">create</span> <span class="n">a</span> <span class="n">dummy</span> <span class="kp">initialize</span> <span class="nb">method</span> <span class="o">*</span><span class="sr">/
+    Method myDummyInitializeMethod = class_getInstanceMethod([self mockObjectClass],
+ @selector(initializeForClassObject));
+    const char *initializeTypes =
+ method_getTypeEncoding(myDummyInitializeMethod);
+    IMP myDummyInitializeIMP =
+ method_getImplementation(myDummyInitializeMethod);
+    class_addMethod(newMetaClass, @selector(initialize),
+ myDummyInitializeIMP, initializeTypes);
+
+...
+
+</span></code></pre>
+</div>
+<p>现在看Mock的源码比较吃力，大概的意思就是 动态创建一个类用它的元类(meta-class)作为mockedClass的元类，同时并创建改类的初始化方法。</p>
+
+<h1 id="ocmock中几个主要方法">OCMock中几个主要方法</h1>
+<ul>
+  <li>任意类型的 mock</li>
+</ul>
+
+<div class="language-ruby highlighter-rouge"><pre class="highlight"><code>    <span class="nb">id</span> <span class="n">mockA</span> <span class="o">=</span> <span class="p">[</span><span class="no">OCMock</span> <span class="n">mockForClass</span> <span class="p">[</span><span class="no">A</span> <span class="k">class</span><span class="p">]];</span>
+</code></pre>
+</div>
+
+<p>这种方式创建的mock对象，如果调用未stub的方法，会抛出一个异常。
+这需要保证在mock的生命周期中每一个独立调用的方法都是被存根的。</p>
+
+<ul>
+  <li>Nice Mock</li>
+</ul>
+
+<div class="language-ruby highlighter-rouge"><pre class="highlight"><code><span class="nb">id</span> <span class="n">niceMockA</span> <span class="o">=</span> <span class="p">[</span><span class="no">OCMock</span> <span class="n">niceMockForClass</span><span class="p">[</span><span class="no">A</span> <span class="k">class</span><span class="p">]];</span>
+</code></pre>
+</div>
+
+<p>如果你不想自己对很多的方法进行存根，那么使用nice mock。Nice mock是比较友好的，当一个没有存根的方法被调用时他不会引起一个异常</p>
+
+<ul>
+  <li>Partial Mock</li>
+</ul>
+
+<div class="language-ruby highlighter-rouge"><pre class="highlight"><code> <span class="nb">id</span> <span class="n">aMock</span> <span class="o">=</span> <span class="p">[</span><span class="no">OCMockObject</span> <span class="ss">partialMockForObject: </span><span class="p">[</span><span class="no">UIApplicationsharedApplication</span><span class="p">]];</span>
+</code></pre>
+</div>
+
+<p>当调用一个没有被存根的方法时，会调用实际对象的该方法。当不能很好的存根一个类的方法时，该技术是非常有用的。另外，对于单例类的mock也需要使用partialMock。</p>
+
+<ul>
+  <li>Stub与Expect的使用</li>
+</ul>
+
+<p>场景：假如我们的待测代码中有一个Car类，Car类中有一个方法为goFaster:units: ，我们的待测函数A需要传入一个Car对象，而A内部一些条件依赖于goFaster:units:的返回值。
+stubbed methods（存根方法）</p>
+
+<div class="language-ruby highlighter-rouge"><pre class="highlight"><code><span class="nb">id</span> <span class="n">mockCar</span> <span class="o">=</span> <span class="p">[</span><span class="no">OCMockmockForClass</span><span class="p">[</span><span class="no">Car</span> <span class="k">class</span><span class="p">]];</span>
+<span class="p">[[[</span><span class="n">mockCar</span> <span class="n">stub</span><span class="p">]</span><span class="n">andReturn</span><span class="p">:</span><span class="err">@</span><span class="s2">"75kph"</span><span class="p">]</span> <span class="n">goFaster</span><span class="p">:[</span><span class="no">OCMArg</span> <span class="n">any</span><span class="p">]</span> <span class="n">units</span><span class="p">:</span><span class="err">@</span><span class="s2">"kph"</span><span class="p">];</span>
+<span class="sr">//</span><span class="err">这样当我们这样调用时：</span>
+<span class="p">[</span><span class="n">mockCar</span> <span class="n">goFaster</span><span class="p">:</span><span class="mi">84</span><span class="n">units</span><span class="p">:</span><span class="err">@”</span><span class="n">kph</span><span class="err">”</span><span class="p">]</span> <span class="o">/</span><span class="sr">/该方法就会返回我们指定的值了(andReturn:期望返回的值)。
+</span></code></pre>
+</div>
+
+<h1 id="ochamcrest">OCHamcrest</h1>
+
+<p>OCHamcrest 用于各种匹配的玩意，文本匹配，逻辑等等。<a href="https://github.com/hamcrest/OCHamcrest">他的github</a>说的很清楚啦。</p>
+
+<h1 id="总结">总结</h1>
+<p>测试其实很重要，老外对这种要求应该比较高，记得看过一篇blog中间一个项目的单元测试代码量比项目代码量还多，在很多人看来这是得不偿失的。作为一个小白，只能现在慢慢重视起来，特别在越大的项目中，单元测试或者时说测试就越重要，不做测试的结果就是项目做到后期bug堆积起来容易失控，这是很可怕的。就bb到这吧，欢迎到我的<a href="https://github.com/acumen1005/">github</a>上一起交流技术.</p>
+
+<h1 id="参考">参考</h1>
+<p><a href="http://objccn.io/issue-15-4/">糟糕的测试</a></p>
+
+<p><a href="http://ocmock.org/">OCMock</a></p>
+
+<p>Testing_with_Xcode文档</p>
+
+
+</section>
+        	</article>
+		</div>
+	</div>
+</body>
+
+</html>

@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="google-site-verification" content="xFcvMZq5Xxvttne4BMyC276ExgD_GG5GUfEjKg2S1a8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="凭自己的能力去赢得一场胜利
+">
+    <meta name="keywords"  content="谷雷雷, iOS, acumen, 咕噜噜, acumen1005, 互联网, 移动端技术">
+    <link rel="stylesheet" type="text/css" href="/media/css/main.css">
+    <link rel="stylesheet" type="text/css" href="/media/css/rouge.css">
+    <link rel="stylesheet" type="text/css" href="/media/css/syntax.css">    
+    <link rel="stylesheet" type="text/css" href="/media/css/bootstrap.css">
+
+    <!-- <link rel="shortcut icon" href="/img/favicon.ico"> -->
+
+    <title>iOS 数据持久化方案 - acumen 的博客 | acumen Blog</title>
+
+    <script></script>
+</head>
+
+
+<!-- hack iOS CSS :active style -->
+<body ontouchstart="">
+	<div id="container">
+		<div id="main" role="main">
+			<header>
+				<h1>iOS 数据持久化方案</h1>
+			</header>
+			<nav>
+				<p><a title="home" href="/">home</a></p>
+				<p><a title="about" href="/about/">about</a></p>
+				<p><a title="links" href="/links/">links</a></p>
+			</nav>
+			<article class="content">
+        		<section class="post">
+<p>iOS 数据持久化方案大致可以分为四种。</p>
+
+<ol>
+  <li>属性列表（plist）</li>
+  <li>对象归档、解档</li>
+  <li>NSUserDefault</li>
+  <li>数据库</li>
+</ol>
+
+<p>了解数据持久化首先需要了解一个应用目录（沙盒机制）下的文件目录结构。</p>
+
+<div class="language-ruby highlighter-rouge"><pre class="highlight"><code><span class="o">-</span> <span class="no">Documents</span> <span class="sr">//</span><span class="err">应用会将数据存储在这个文件夹里</span>
+<span class="o">-</span> <span class="no">Library</span> 
+   <span class="o">-</span> <span class="no">Caches</span> <span class="sr">//</span> <span class="err">存放一些缓存数据</span>
+   <span class="o">-</span> <span class="no">Preferences</span> <span class="sr">//</span><span class="no">NSUserDefaults</span><span class="err">数据就是存在这个文件夹</span>
+<span class="o">-</span> <span class="n">tmp</span> <span class="sr">//</span><span class="err">存放临时文件</span>
+</code></pre>
+</div>
+
+<div class="language-ruby highlighter-rouge"><pre class="highlight"><code><span class="sr">//</span> <span class="err">获取</span><span class="no">Documents</span><span class="err">文件目录</span>
+<span class="no">NSString</span> <span class="o">*</span><span class="n">path</span> <span class="o">=</span> <span class="no">NSSearchPathForDirectoriesInDomains</span><span class="p">(</span><span class="no">NSDocumentDirectory</span><span class="p">,</span> <span class="no">NSUserDomainMask</span><span class="p">,</span> <span class="no">YES</span><span class="p">).</span><span class="nf">firstObject</span><span class="p">;</span> 
+</code></pre>
+</div>
+<p>一些宏定义</p>
+
+<div class="language-ruby highlighter-rouge"><pre class="highlight"><code><span class="c1">#define DATABASE_PATH [PATH_OF_DOCUMENT stringByAppendingPathComponent:@"anbao.db"]</span>
+<span class="c1">#define PATH_OF_APP_HOME    NSHomeDirectory()</span>
+<span class="c1">#define PATH_OF_TEMP        NSTemporaryDirectory()</span>
+<span class="c1">#define PATH_OF_DOCUMENT    [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) objectAtIndex:0]</span>
+</code></pre>
+</div>
+
+<p>可以被序列化的类型介绍</p>
+
+<div class="language-ruby highlighter-rouge"><pre class="highlight"><code><span class="no">NSArray</span><span class="p">;</span>
+<span class="no">NSMutableArray</span><span class="p">;</span>
+<span class="no">NSDictionary</span><span class="p">;</span>
+<span class="no">NSMutableDictionary</span><span class="p">;</span>
+<span class="no">NSData</span><span class="p">;</span>
+<span class="no">NSMutableData</span><span class="p">;</span>
+<span class="no">NSString</span><span class="p">;</span>
+<span class="no">NSMutableString</span><span class="p">;</span>
+<span class="no">NSNumber</span><span class="p">;</span>
+<span class="no">NSDate</span><span class="p">;</span>
+</code></pre>
+</div>
+
+<h2 id="plist文件">plist文件</h2>
+
+<p>plist文件可以将某些特定的类，以XML的格式保存起来，比较常见的plist的文件<strong><em>Info.plist</em></strong></p>
+
+<p><img src="../../../../img/post/save-1.png" alt="img" /></p>
+
+<p>图片显示的就是plist文件所对应的XML文件格式。</p>
+
+<p><strong><em>1.获取文件</em></strong><br />
+在项目的根目录下存在一个demo.plist</p>
+
+<div class="language-ruby highlighter-rouge"><pre class="highlight"><code>	<span class="no">NSString</span> <span class="o">*</span><span class="n">path</span> <span class="o">=</span> <span class="p">[[</span><span class="no">NSBundle</span> <span class="n">mainBundle</span><span class="p">]</span> <span class="n">pathForResource</span><span class="p">:</span><span class="err">@</span><span class="s2">"demo"</span> <span class="n">ofType</span><span class="p">:</span><span class="err">@</span><span class="s2">"plist"</span><span class="p">];</span>
+    
+    <span class="sr">//</span> <span class="err">判断文件是否存在</span>
+    <span class="k">if</span><span class="p">([[</span><span class="no">NSFileManager</span> <span class="n">defaultManager</span><span class="p">]</span> <span class="n">fileExistsAtPath</span><span class="ss">:path</span><span class="p">])</span> <span class="p">{</span>
+        <span class="no">NSLog</span><span class="p">(</span><span class="err">@</span><span class="s2">"%@"</span><span class="p">,</span><span class="n">path</span><span class="p">);</span>
+        
+        <span class="sr">//</span><span class="p">.</span><span class="nf">.</span>
+    <span class="p">}</span>
+    <span class="k">else</span> <span class="p">{</span>
+        <span class="no">NSLog</span><span class="p">(</span><span class="err">@</span><span class="s2">"文件不存在！"</span><span class="p">);</span>
+    <span class="p">}</span>
+</code></pre>
+</div>
+
+<p><strong><em>2.读取文件内容</em></strong></p>
+
+<div class="language-ruby highlighter-rouge"><pre class="highlight"><code>	<span class="no">NSMutableDictionary</span> <span class="o">*</span><span class="n">result</span> <span class="o">=</span> <span class="p">[[</span><span class="no">NSMutableDictionary</span> <span class="n">alloc</span><span class="p">]</span> <span class="n">initWithContentsOfFile</span><span class="ss">:path</span><span class="p">];</span>
+	<span class="no">NSLog</span><span class="p">(</span><span class="err">@</span><span class="s2">"%@"</span><span class="p">,</span> <span class="n">result</span><span class="p">);</span>
+</code></pre>
+</div>
+<p>输出</p>
+
+<div class="language-ruby highlighter-rouge"><pre class="highlight"><code><span class="mi">2016</span><span class="o">-</span><span class="mi">10</span><span class="o">-</span><span class="mi">13</span> <span class="mi">21</span><span class="p">:</span><span class="mi">54</span><span class="p">:</span><span class="mo">06</span><span class="o">.</span><span class="mi">831</span> <span class="no">SaveDemo</span><span class="p">[</span><span class="mi">986</span><span class="p">:</span><span class="mi">103991</span><span class="p">]</span> <span class="p">{</span>
+    <span class="n">demoKey</span> <span class="o">=</span> <span class="n">demoValue</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre>
+</div>
+
+<p><strong><em>3.写入文件</em></strong></p>
+
+<div class="language-ruby highlighter-rouge"><pre class="highlight"><code>	<span class="sr">//</span><span class="err">写入</span>
+	<span class="no">NSMutableDictionary</span> <span class="o">*</span><span class="n">dict</span> <span class="o">=</span> <span class="p">[[</span><span class="no">NSMutableDictionary</span> <span class="n">alloc</span><span class="p">]</span> <span class="n">init</span><span class="p">];</span>
+	<span class="p">[</span><span class="n">dict</span> <span class="n">setObject</span><span class="p">:</span><span class="err">@</span><span class="s2">"inputValue"</span> <span class="n">forKey</span><span class="p">:</span><span class="err">@</span><span class="s2">"inputKey"</span><span class="p">];</span>
+	<span class="p">[</span><span class="n">dict</span> <span class="n">writeToFile</span><span class="ss">:path</span> <span class="n">atomically</span><span class="ss">:YES</span><span class="p">];</span>
+</code></pre>
+</div>
+
+<h2 id="归档解档">归档、解档</h2>
+
+<p>归档是iOS序列化的一种方式，我们需要实现的一个协议_NSCoding_协议</p>
+
+<p><strong><em>1.协议说明</em></strong></p>
+
+<p>NSCoding协议才是归档和解档的一个重要协议，其中需要实现两个方法：</p>
+
+<div class="language-ruby highlighter-rouge"><pre class="highlight"><code>	<span class="o">-</span> <span class="p">(</span><span class="n">void</span><span class="p">)</span> <span class="n">encodeWithCoder</span><span class="p">:(</span><span class="no">NSCoder</span> <span class="o">*</span><span class="p">)</span><span class="n">aCoder</span><span class="p">;</span>
+	<span class="o">-</span> <span class="p">(</span><span class="nb">id</span><span class="p">)</span> <span class="n">initWithCoder</span><span class="p">:(</span><span class="no">NSCoder</span> <span class="o">*</span><span class="p">)</span><span class="n">aDecoder</span>
+</code></pre>
+</div>
+
+<p><strong><em>2.NSKeyedArchiver 和 NSKeyedUnarchiver</em></strong></p>
+
+<div class="language-ruby highlighter-rouge"><pre class="highlight"><code>	<span class="sr">//</span> <span class="err">将</span> <span class="no">UserBean</span> <span class="err">类归档到一个</span><span class="no">NSData</span><span class="err">实例中</span>
+	<span class="no">NSData</span> <span class="o">*</span><span class="n">data</span> <span class="o">=</span> <span class="p">[</span><span class="no">NSKeyedArchiver</span> <span class="n">archivedDataWithRootObject</span><span class="ss">:userBean</span><span class="p">];</span>
+</code></pre>
+</div>
+
+<p>自定义类的对象是无法直接写入文件或者存入 NSUserDefault 中的，此时就需要对该对象进行归档。之后得到的NSData数据之后就可以进一步的使用 文件的I/O 或者 NSUserDefault 存入本地。</p>
+
+<div class="language-ruby highlighter-rouge"><pre class="highlight"><code>	<span class="sr">//</span> <span class="no">UserBean</span> <span class="err">对象的解档</span>
+	<span class="no">UserBean</span> <span class="o">*</span><span class="n">userBean</span> <span class="o">=</span> <span class="p">[</span><span class="no">NSKeyedUnarchiver</span> <span class="n">unarchiveObjectWithData</span><span class="ss">:data</span><span class="p">];</span>
+</code></pre>
+</div>
+
+<h2 id="nsuserdefault">NSUserDefault</h2>
+
+<p>应该算是比较常用的轻量级持久化方法，对于存一些当前用户的信息、状态等都是不错的选择。之前提到的沙盒机制，对于 NSUserDefault 的数据存放在 Library/Preferences 文件下。对于 app 的更新 NSUserDefault 的数据是不会删除的，除非用户卸载 app。</p>
+
+<p><strong><em>1.存入对象要求</em></strong></p>
+
+<ul>
+  <li>遵循NSCoding协议的对象才能存入NSUserDefault，如：UIImage 例外。</li>
+  <li>对于比较大的数据不建议使用NSUserDefault。（据说NSUserDefault的 I/O 比较慢）</li>
+</ul>
+
+<p><strong><em>2.存取</em></strong></p>
+
+<div class="language-ruby highlighter-rouge"><pre class="highlight"><code>	<span class="sr">//</span><span class="err">存入</span> <span class="no">NSUserDefaults</span> 
+	<span class="p">[[</span><span class="no">NSUserDefaults</span> <span class="n">standardUserDefaults</span><span class="p">]</span> <span class="n">setObject</span><span class="p">:</span><span class="err">@</span><span class="s2">"demoValue"</span> <span class="n">forKey</span><span class="p">:</span><span class="err">@</span><span class="s2">"demoKey"</span><span class="p">];</span>
+	<span class="sr">//</span><span class="err">读取</span> <span class="err">数据</span>
+	<span class="no">NSLog</span><span class="p">(</span><span class="err">@</span><span class="s2">"%@"</span><span class="p">,[[</span><span class="no">NSUserDefaults</span> <span class="n">standardUserDefaults</span><span class="p">]</span> <span class="n">valueForKey</span><span class="p">:</span><span class="err">@</span><span class="s2">"demoKey"</span><span class="p">]);</span>
+</code></pre>
+</div>
+
+<p>对于存基本型的几个方法：</p>
+
+<div class="language-ruby highlighter-rouge"><pre class="highlight"><code>	<span class="o">-</span> <span class="p">(</span><span class="n">void</span><span class="p">)</span><span class="n">setInteger</span><span class="p">:(</span><span class="no">NSInteger</span><span class="p">)</span><span class="n">value</span> <span class="n">forKey</span><span class="p">:(</span><span class="no">NSString</span> <span class="o">*</span><span class="p">)</span><span class="n">defaultName</span><span class="p">;</span>
+	<span class="o">-</span> <span class="p">(</span><span class="n">void</span><span class="p">)</span><span class="n">setFloat</span><span class="p">:(</span><span class="n">float</span><span class="p">)</span><span class="n">value</span> <span class="n">forKey</span><span class="p">:(</span><span class="no">NSString</span> <span class="o">*</span><span class="p">)</span><span class="n">defaultName</span><span class="p">;</span>
+	<span class="o">-</span> <span class="p">(</span><span class="n">void</span><span class="p">)</span><span class="n">setDouble</span><span class="p">:(</span><span class="n">double</span><span class="p">)</span><span class="n">value</span> <span class="n">forKey</span><span class="p">:(</span><span class="no">NSString</span> <span class="o">*</span><span class="p">)</span><span class="n">defaultName</span><span class="p">;</span>
+	<span class="o">-</span> <span class="p">(</span><span class="n">void</span><span class="p">)</span><span class="n">setBool</span><span class="p">:(</span><span class="no">BOOL</span><span class="p">)</span><span class="n">value</span> <span class="n">forKey</span><span class="p">:(</span><span class="no">NSString</span> <span class="o">*</span><span class="p">)</span><span class="n">defaultName</span><span class="p">;</span>
+	<span class="sr">//</span><span class="err">读取</span>
+	<span class="o">-</span> <span class="p">(</span><span class="no">NSInteger</span><span class="p">)</span><span class="n">integerForKey</span><span class="p">:(</span><span class="no">NSString</span> <span class="o">*</span><span class="p">)</span><span class="n">defaultName</span><span class="p">;</span>
+	<span class="o">-</span> <span class="p">(</span><span class="n">float</span><span class="p">)</span><span class="n">floatForKey</span><span class="p">:(</span><span class="no">NSString</span> <span class="o">*</span><span class="p">)</span><span class="n">defaultName</span><span class="p">;</span>
+	<span class="o">-</span> <span class="p">(</span><span class="n">double</span><span class="p">)</span><span class="n">doubleForKey</span><span class="p">:(</span><span class="no">NSString</span> <span class="o">*</span><span class="p">)</span><span class="n">defaultName</span><span class="p">;</span>
+	<span class="o">-</span> <span class="p">(</span><span class="no">BOOL</span><span class="p">)</span><span class="n">boolForKey</span><span class="p">:(</span><span class="no">NSString</span> <span class="o">*</span><span class="p">)</span><span class="n">defaultName</span><span class="p">;</span>
+</code></pre>
+</div>
+
+<h2 id="数据库">数据库</h2>
+
+<p>数据库这里想简单介绍一下 FMDB 第三方库。FMDB 是 iOS 平台的SQLite 数据库框架，它是封装了 SQLite 的 C语言 API。</p>
+
+<p>主要有三个类：</p>
+
+<ul>
+  <li>FMDatabase （用来执行SQL）</li>
+  <li>FMResultSet (查询结果集)</li>
+  <li>FMDatabaseQueue (多线程中执行操作，线程安全)</li>
+</ul>
+
+<p><strong><em>1.封装成工具类</em></strong></p>
+
+<p>FMDBTools.h</p>
+
+<div class="language-ruby highlighter-rouge"><pre class="highlight"><code><span class="c1">#import &lt;Foundation/Foundation.h&gt;</span>
+<span class="c1">#import "FMDatabase.h"</span>
+
+<span class="vi">@interface</span> <span class="no">FMDBTools</span> <span class="p">:</span> <span class="no">NSObject</span>
+
+<span class="vi">@property</span> <span class="p">(</span><span class="n">strong</span><span class="p">,</span><span class="n">nonatomic</span><span class="p">)</span> <span class="no">FMDatabase</span> <span class="o">*</span><span class="n">fmdb</span><span class="p">;</span>
+
+<span class="o">+</span> <span class="p">(</span><span class="n">instancetype</span><span class="p">)</span> <span class="n">shareFMDBTools</span><span class="p">;</span>
+
+<span class="sr">//</span><span class="err">打开数据库</span>
+<span class="o">-</span> <span class="p">(</span><span class="n">void</span><span class="p">)</span> <span class="n">fmDatabaseOpen</span><span class="p">;</span>
+
+<span class="sr">//</span><span class="err">关闭数据库</span>
+<span class="o">-</span> <span class="p">(</span><span class="n">void</span><span class="p">)</span> <span class="n">fmDatabaseClose</span><span class="p">;</span>
+
+<span class="vi">@end</span>
+</code></pre>
+</div>
+
+<p>FMDBTools.m</p>
+
+<div class="language-ruby highlighter-rouge"><pre class="highlight"><code><span class="c1">#import "FMDBTools.h"</span>
+
+
+<span class="vi">@implementation</span> <span class="no">FMDBTools</span>
+
+<span class="o">+</span> <span class="p">(</span><span class="n">instancetype</span><span class="p">)</span> <span class="n">shareFMDBTools</span> <span class="p">{</span>
+    <span class="n">static</span> <span class="no">FMDBTools</span> <span class="o">*</span><span class="n">shareFMDBTools</span> <span class="o">=</span> <span class="kp">nil</span><span class="p">;</span>
+    <span class="n">static</span> <span class="n">dispatch_once_t</span> <span class="n">predicate</span><span class="p">;</span>
+    
+    <span class="n">dispatch_once</span><span class="p">(</span><span class="o">&amp;</span><span class="n">predicate</span><span class="p">,</span> <span class="o">^</span><span class="p">{</span>
+        <span class="n">shareFMDBTools</span> <span class="o">=</span> <span class="p">[[</span><span class="nb">self</span> <span class="n">alloc</span><span class="p">]</span> <span class="n">init</span><span class="p">];</span>
+    <span class="p">});</span>
+    <span class="k">return</span> <span class="n">shareFMDBTools</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="o">-</span> <span class="p">(</span><span class="no">FMDatabase</span> <span class="o">*</span><span class="p">)</span> <span class="n">fmdb</span> <span class="p">{</span>
+    <span class="k">if</span><span class="p">(</span><span class="o">!</span><span class="n">_fmdb</span><span class="p">){</span>
+<span class="sr">//</span>        <span class="no">NSString</span> <span class="o">*</span> <span class="n">doc</span> <span class="o">=</span> <span class="no">PATH_OF_DOCUMENT</span><span class="p">;</span>
+<span class="sr">//</span>        <span class="no">NSString</span> <span class="o">*</span> <span class="n">path</span> <span class="o">=</span> <span class="p">[</span><span class="n">doc</span> <span class="n">stringByAppendingPathComponent</span><span class="ss">:DATABASE_PATH</span><span class="p">];</span>
+        <span class="no">NSLog</span><span class="p">(</span><span class="err">@</span><span class="s2">"databaseWithPath - %@"</span><span class="p">,</span><span class="no">DATABASE_PATH</span><span class="p">);</span>
+        <span class="n">_fmdb</span> <span class="o">=</span> <span class="p">[</span><span class="no">FMDatabase</span> <span class="n">databaseWithPath</span><span class="ss">:DATABASE_PATH</span><span class="p">];</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="n">_fmdb</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="o">-</span> <span class="p">(</span><span class="n">void</span><span class="p">)</span> <span class="n">fmDatabaseClose</span><span class="p">{</span>
+    <span class="p">[</span><span class="nb">self</span><span class="p">.</span><span class="nf">fmdb</span> <span class="n">close</span><span class="p">];</span>
+<span class="p">}</span>
+
+<span class="o">-</span> <span class="p">(</span><span class="n">void</span><span class="p">)</span> <span class="n">fmDatabaseOpen</span><span class="p">{</span>
+    <span class="p">[</span><span class="nb">self</span><span class="p">.</span><span class="nf">fmdb</span> <span class="nb">open</span><span class="p">];</span>
+<span class="p">}</span>
+
+<span class="vi">@end</span>
+</code></pre>
+</div>
+
+<p><strong><em>2.建立数据库</em></strong></p>
+
+<div class="language-ruby highlighter-rouge"><pre class="highlight"><code><span class="o">-</span> <span class="p">(</span><span class="n">void</span><span class="p">)</span> <span class="n">createXXXTable</span><span class="p">{</span>
+
+    <span class="no">NSFileManager</span> <span class="o">*</span> <span class="n">fileManager</span> <span class="o">=</span> <span class="p">[</span><span class="no">NSFileManager</span> <span class="n">defaultManager</span><span class="p">];</span>
+    <span class="k">if</span> <span class="p">([</span><span class="n">fileManager</span> <span class="n">fileExistsAtPath</span><span class="ss">:DATABASE_PATH</span><span class="p">]</span> <span class="o">==</span> <span class="no">NO</span><span class="p">)</span> <span class="p">{</span>
+        <span class="sr">//</span> <span class="n">create</span> <span class="n">table</span>
+        
+        <span class="k">if</span> <span class="p">([[</span><span class="no">FMDBTools</span> <span class="n">shareFMDBTools</span><span class="p">].</span><span class="nf">fmdb</span> <span class="nb">open</span><span class="p">])</span> <span class="p">{</span>
+            <span class="no">NSString</span> <span class="o">*</span> <span class="n">sql</span> <span class="o">=</span> <span class="err">@</span><span class="s2">"CREATE TABLE 'tb_videostatus' ('id' INTEGER PRIMARY KEY AUTOINCREMENT  NOT NULL , 'userId' INTEGER, 'status' INTEGER NOT NULL DEFAULT 0,)"</span><span class="p">;</span>
+            <span class="no">BOOL</span> <span class="n">res</span> <span class="o">=</span> <span class="p">[[</span><span class="no">FMDBTools</span> <span class="n">shareFMDBTools</span><span class="p">].</span><span class="nf">fmdb</span> <span class="n">executeUpdate</span><span class="ss">:sql</span><span class="p">];</span>
+            <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">res</span><span class="p">)</span> <span class="p">{</span>
+                <span class="no">NSLog</span><span class="p">(</span><span class="err">@</span><span class="s2">"error when creating db table"</span><span class="p">);</span>
+            <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+                <span class="no">NSLog</span><span class="p">(</span><span class="err">@</span><span class="s2">"succ to creating db table"</span><span class="p">);</span>
+            <span class="p">}</span>
+            <span class="p">[[</span><span class="no">FMDBTools</span> <span class="n">shareFMDBTools</span><span class="p">].</span><span class="nf">fmdb</span>  <span class="n">close</span><span class="p">];</span>
+        <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+            <span class="no">NSLog</span><span class="p">(</span><span class="err">@</span><span class="s2">"error when open db"</span><span class="p">);</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+    <span class="k">else</span> <span class="p">{</span>
+        <span class="no">NSLog</span><span class="p">(</span><span class="err">@</span><span class="s2">"数据库已存在!"</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+</div>
+
+<p><strong><em>3.数据库操作</em></strong></p>
+
+<p>插入</p>
+
+<div class="language-ruby highlighter-rouge"><pre class="highlight"><code><span class="k">if</span> <span class="p">([[</span><span class="no">FMDBTools</span> <span class="n">shareFMDBTools</span><span class="p">].</span><span class="nf">fmdb</span> <span class="nb">open</span><span class="p">])</span> <span class="p">{</span>
+        
+        <span class="k">if</span><span class="p">([</span><span class="nb">self</span> <span class="n">queryVideoStatusTableWithVideoId</span><span class="ss">:videoId</span> <span class="no">CourseId</span><span class="ss">:courseId</span> <span class="no">UserId</span><span class="ss">:userId</span><span class="p">]){</span>
+            <span class="p">[[</span><span class="no">FMDBTools</span> <span class="n">shareFMDBTools</span><span class="p">].</span><span class="nf">fmdb</span> <span class="n">close</span><span class="p">];</span>
+            <span class="k">return</span> <span class="p">;</span>
+        <span class="p">}</span>
+        
+        <span class="no">NSString</span> <span class="o">*</span> <span class="n">sql</span> <span class="o">=</span> <span class="no">SQL</span><span class="err">插入语句</span>
+        <span class="no">BOOL</span> <span class="n">res</span> <span class="o">=</span> <span class="p">[[</span><span class="no">FMDBTools</span> <span class="n">shareFMDBTools</span><span class="p">].</span><span class="nf">fmdb</span> <span class="n">executeUpdate</span><span class="ss">:sql</span><span class="p">];</span>
+        <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">res</span><span class="p">)</span> <span class="p">{</span>
+            <span class="no">NSLog</span><span class="p">(</span><span class="err">@</span><span class="s2">"error to insert data"</span><span class="p">);</span>
+        <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+            <span class="no">NSLog</span><span class="p">(</span><span class="err">@</span><span class="s2">"succ to insert data"</span><span class="p">);</span>
+        <span class="p">}</span>
+        <span class="p">[[</span><span class="no">FMDBTools</span> <span class="n">shareFMDBTools</span><span class="p">].</span><span class="nf">fmdb</span> <span class="n">close</span><span class="p">];</span>
+    <span class="p">}</span>
+</code></pre>
+</div>
+
+<p>更新</p>
+
+<div class="language-ruby highlighter-rouge"><pre class="highlight"><code><span class="k">if</span> <span class="p">([[</span><span class="no">FMDBTools</span> <span class="n">shareFMDBTools</span><span class="p">].</span><span class="nf">fmdb</span> <span class="nb">open</span><span class="p">])</span> <span class="p">{</span>
+        
+        <span class="no">NSString</span> <span class="o">*</span> <span class="n">sql</span> <span class="o">=</span> <span class="no">SQL</span><span class="err">更新语句</span><span class="p">;</span>
+        
+        <span class="no">BOOL</span> <span class="n">res</span> <span class="o">=</span> <span class="p">[[</span><span class="no">FMDBTools</span> <span class="n">shareFMDBTools</span><span class="p">].</span><span class="nf">fmdb</span> <span class="n">executeUpdate</span><span class="ss">:sql</span><span class="p">];</span>
+        <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">res</span><span class="p">)</span> <span class="p">{</span>
+            <span class="no">NSLog</span><span class="p">(</span><span class="err">@</span><span class="s2">"error to update data"</span><span class="p">);</span>
+        <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+            <span class="no">NSLog</span><span class="p">(</span><span class="err">@</span><span class="s2">"succ to update data"</span><span class="p">);</span>
+        <span class="p">}</span>
+        <span class="p">[[</span><span class="no">FMDBTools</span> <span class="n">shareFMDBTools</span><span class="p">].</span><span class="nf">fmdb</span> <span class="n">close</span><span class="p">];</span>
+    <span class="p">}</span>
+</code></pre>
+</div>
+
+<p>以上只是一些简单的数据库操作，关于多线程中的操作再之后的涉及到再做总结。</p>
+
+<h2 id="总结">总结</h2>
+<p>数据持久化对于 app 来说还是很重要的，设计一个合理的持久化方案可以让 app 体验更佳。总结的不恰当之处，还请见谅。</p>
+
+
+</section>
+        	</article>
+		</div>
+	</div>
+</body>
+
+</html>

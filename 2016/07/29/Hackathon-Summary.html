@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="google-site-verification" content="xFcvMZq5Xxvttne4BMyC276ExgD_GG5GUfEjKg2S1a8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="凭自己的能力去赢得一场胜利
+">
+    <meta name="keywords"  content="谷雷雷, iOS, acumen, 咕噜噜, acumen1005, 互联网, 移动端技术">
+    <link rel="stylesheet" type="text/css" href="/media/css/main.css">
+    <link rel="stylesheet" type="text/css" href="/media/css/rouge.css">
+    <link rel="stylesheet" type="text/css" href="/media/css/syntax.css">    
+    <link rel="stylesheet" type="text/css" href="/media/css/bootstrap.css">
+
+    <!-- <link rel="shortcut icon" href="/img/favicon.ico"> -->
+
+    <title>Hackathon Summary - acumen 的博客 | acumen Blog</title>
+
+    <script></script>
+</head>
+
+
+<!-- hack iOS CSS :active style -->
+<body ontouchstart="">
+	<div id="container">
+		<div id="main" role="main">
+			<header>
+				<h1>Hackathon Summary</h1>
+			</header>
+			<nav>
+				<p><a title="home" href="/">home</a></p>
+				<p><a title="about" href="/about/">about</a></p>
+				<p><a title="links" href="/links/">links</a></p>
+			</nav>
+			<article class="content">
+        		<section class="post">
+<p>hackathon做一次总结吧。</p>
+
+<p>从报名开始记得是4.14晚上23点20才得知有这个活动或者说是比赛吧，那时候气势高涨的报名了，还是挺exciting的。<br />
+4.16早点9点半左右到了杭电，发现现场已经坐满了人。好像大家都是有备而来，我和A君签完到就进去了。由于组队（2-4个人）原因找了两个也’落单’的杭电参赛者。比赛开始就是领导：@＃@¥！＃！％¥＃@¥@！…（之后是12点半正式开发时间）。</p>
+
+<p>讲一讲我们比赛的艰辛过程吧。我们的第一个idea。</p>
+<blockquote>
+  <p>语音识别微信之类语音中的敏感词汇（你比如密码，身份证号之类），若是包含敏感词则将该语音在外放的时候做模糊处理，在听筒模式时语音则是清晰的。可以做成一个类似小插件。</p>
+</blockquote>
+
+<p>这是我们的第一个想法。提出来之后A君说没什么意思就草草带过了。之后做的一个项目就是：</p>
+<blockquote>
+  <p>老师通过在手机上提问推送到学生手机上回答并反馈的一个类似项目中的小模块。该项目的主要难点就是多台手机之间的推送问题。可以作为一个app的一个小模块。</p>
+</blockquote>
+
+<p>查了一下做IM几种协议和机制xmpp，mqtt，socket之类等等，我们选择xmpp的原因就是搭起来比较方便。由于我们没有后台的原因，找了场外的大牛技术支持下＝ ＝。大牛提供了思路，完全不会后台的我们。就开始艰辛之旅。</p>
+
+<p>大概的时间轴：</p>
+
+<ul>
+  <li>
+    <p>7点～8点：我开始搭后代的服务，发现openfire搭起来很简单，然后下完大概30分钟就搞定了，又下一个spark做一个client测试完成大概一个小时。只要的原因是现场wifi速度感人。之后放空了一段时间，看了一下xmpp协议一些机制</p>
+  </li>
+  <li>
+    <p>8点～：用了封装好的xmppframeworok 可以直接调用API对服务器中的服务直接操作。开始对项目环境配置好。然后就走上了一条不归路，折腾一个完全不知道的东西，百度＋try。想了一个我们大概是需要一个聊天室，然后其中的一个人（老师角色）可以发消息出来，但是其他人（学生角色）回复消息中能回复给（老师），做一个反馈。<br />
+刚开始登录，查到了网上有人一些api文档（太简单了，一个函数头，几个字’总结’功能），比较顺利，登录一次就成功了</p>
+  </li>
+</ul>
+
+<blockquote>
+  <p>连接服务器</p>
+</blockquote>
+
+<div class="language-ruby highlighter-rouge"><pre class="highlight"><code><span class="p">[</span><span class="no">XMPPJID</span> <span class="n">jidWithUser</span><span class="p">:</span><span class="err">@</span><span class="s2">"user"</span> <span class="n">domain</span><span class="ss">:XMPP_DOMAIN</span> <span class="n">resource</span><span class="p">:</span><span class="err">@</span><span class="s2">"iPhone”]  
+</span></code></pre>
+</div>
+<blockquote>
+  <p>验证密码</p>
+</blockquote>
+
+<div class="language-ruby highlighter-rouge"><pre class="highlight"><code><span class="p">[</span><span class="nb">self</span> <span class="n">authenticateWithPassword</span><span class="p">:</span><span class="err">@</span><span class="s2">"password"</span> <span class="n">error</span><span class="ss">:&amp;</span><span class="n">error</span><span class="p">];</span>  
+</code></pre>
+</div>
+
+<blockquote>
+  <p>认证成功之后回调</p>
+</blockquote>
+
+<div class="language-ruby highlighter-rouge"><pre class="highlight"><code><span class="o">-</span><span class="p">(</span><span class="n">void</span><span class="p">)</span><span class="n">xmppStreamDidAuthenticate</span><span class="p">:(</span><span class="no">XMPPStream</span> <span class="o">*</span><span class="p">)</span><span class="n">sender</span><span class="err">方法。</span>
+</code></pre>
+</div>
+
+<p>这个流程一次就成功了。
+之后的大问题就是建立一个聊天室，后来成功后回头看之前的问题，应该是建立房间成功后再回调方法中要对配置房间的属性</p>
+
+<div class="language-ruby highlighter-rouge"><pre class="highlight"><code><span class="p">[</span><span class="nb">self</span> <span class="n">configureRoomUsingOptions</span><span class="p">:]</span>
+</code></pre>
+</div>
+<blockquote>
+  <p>建立房间</p>
+</blockquote>
+
+<div class="language-ruby highlighter-rouge"><pre class="highlight"><code><span class="p">[[</span><span class="no">XMPPRoom</span> <span class="n">alloc</span><span class="p">]</span> <span class="n">initWithRoomStorage</span><span class="p">:[</span><span class="no">XMPPRoomCoreDataStorage</span>  <span class="n">sharedInstance</span><span class="p">]</span> <span class="n">jid</span><span class="ss">:roomJID</span><span class="p">]</span>
+</code></pre>
+</div>
+
+<p>遇到问题如何进入这个房间。对我们的难点在于还不知道怎么去获得服务器上的房间（后来感觉是用IQ请求后来的解决方法是用传递JID的方式来获取一个房间的对象然后调用</p>
+
+<div class="language-ruby highlighter-rouge"><pre class="highlight"><code><span class="p">[</span><span class="nb">self</span><span class="p">.</span><span class="nf">xmppRoom</span> <span class="n">joinRoomUsingNickname</span><span class="p">:</span><span class="err">@“</span><span class="n">nickname</span><span class="s2">" history:nil];
+</span></code></pre>
+</div>
+<p>之后就是message的发送了，这个前面完成的情况下还是比较容易的。
+给聊天室的所有人发送</p>
+
+<div class="language-ruby highlighter-rouge"><pre class="highlight"><code><span class="p">[</span><span class="nb">self</span><span class="p">.</span><span class="nf">xmppRoom</span> <span class="n">sendMessageWithBody</span><span class="p">:</span><span class="err">@“</span><span class="n">hi</span><span class="err">”</span><span class="p">];</span>
+</code></pre>
+</div>
+<p>接收的话，服务器中应该会实时监听这个时间有人给你发送消息立刻回调方法做到到此为止发现已经凌晨4点多了。当是也没有累，能看到消息发过来就已经非常exciting。</p>
+
+<p>其中很大的一部分时间浪费在中间有段没有配置room，当是服务器上有room出现导致我们认为已经成功。后来用spark测试了一下。才发现那个room是进不去的。后来加了一段配置之后问题就迎刃而解来。论测试的重要性！！！ 开发结束～</p>
+
+<p>展示阶段让我一震的有两个作品：一个是游戏，一个网页与command同步作品。</p>
+
+<p>我描述的比较简单，但是作品确实震撼到我。
+以下都是我个人的看法：</p>
+
+<blockquote>
+  <p>游戏</p>
+</blockquote>
+
+<p>据开发者说涉及到语音识别，nodejs，AI，模糊匹配。之后介绍的模糊匹配的算法，他们是用矩阵来计算匹配的精度，这种量化的思路我觉得是可行的，但是算法的正确行我认为还有待证明啊。AI策略具体细节我不了解，但是游戏到round20+还没结束，是AI策略导致的结果还是…..</p>
+
+<blockquote>
+  <p>网页与command同步</p>
+</blockquote>
+
+<p>回去的路上我想了下，其实这个同步过程类似将command内容copy到web上技术可能是websocket吧。</p>
+
+<p>以上两个作品真切让我感受到一个做技术的魅力啊，这个也是hackathon的意义所在吧。也深深的觉得自己的不足。这次hackathon觉得收获还是很多的。</p>
+
+</section>
+        	</article>
+		</div>
+	</div>
+</body>
+
+</html>

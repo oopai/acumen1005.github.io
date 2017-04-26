@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="google-site-verification" content="xFcvMZq5Xxvttne4BMyC276ExgD_GG5GUfEjKg2S1a8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="凭自己的能力去赢得一场胜利
+">
+    <meta name="keywords"  content="谷雷雷, iOS, acumen, 咕噜噜, acumen1005, 互联网, 移动端技术">
+    <link rel="stylesheet" type="text/css" href="/media/css/main.css">
+    <link rel="stylesheet" type="text/css" href="/media/css/rouge.css">
+    <link rel="stylesheet" type="text/css" href="/media/css/syntax.css">    
+    <link rel="stylesheet" type="text/css" href="/media/css/bootstrap.css">
+
+    <!-- <link rel="shortcut icon" href="/img/favicon.ico"> -->
+
+    <title>HTTPS 原理简单介绍 - acumen 的博客 | acumen Blog</title>
+
+    <script></script>
+</head>
+
+
+<!-- hack iOS CSS :active style -->
+<body ontouchstart="">
+	<div id="container">
+		<div id="main" role="main">
+			<header>
+				<h1>HTTPS 原理简单介绍</h1>
+			</header>
+			<nav>
+				<p><a title="home" href="/">home</a></p>
+				<p><a title="about" href="/about/">about</a></p>
+				<p><a title="links" href="/links/">links</a></p>
+			</nav>
+			<article class="content">
+        		<section class="post">
+<p>在2017年估计是 HTTPS 的热潮，从 Apple 在 WWDC 宣布 App Store 的中 App 强制打开 ATS （App Transport Security），这也就意味着我们的应用需要支持 HTTPS，至少是对应的网络接口需要支持。关于其他的，比如CDN、外链是否需要支持，Apple 也没有给出明确的要求。这篇文章介绍一下 HTTPS 的原理。</p>
+
+<h2 id="为什么需要-https">为什么需要 HTTPS</h2>
+<p>我们知道 HTTP 协议中数据传输都是明文的，也就是说在我们传输的数据被中间人监听或者截获，数据内容也就被完全的知道，甚至是修改或者冒充你的身份。所以在 HTTP 的通讯过程中有以下不安全的因素：</p>
+
+<ul>
+  <li>窃听，获取传输信息</li>
+  <li>篡改，修改传输信息</li>
+  <li>冒充，假冒身份通讯</li>
+</ul>
+
+<h2 id="https-是如何做到安全的">HTTPS 是如何做到安全的</h2>
+<p>HTTPS 是 HTTP + SSL／TLS。我们知道 HTTP 在 OSI 七层协议架构中属于应用层，了解 OSI 的同学就知道 SSL （Secure Socket Layer安全套接层） 就应该在表示层（处理一些数据加解密等）和会话层（处理通讯之间建立、协作等）工作。
+从上面的描述来看，HTTPS 其实握手时进行身份验证和在数据传输时进行数据加密、校验来达到安全。</p>
+
+<ul>
+  <li><del>窃听，获取传输信息</del>  数据加密</li>
+  <li><del>篡改，修改传输信息</del>  数据校验</li>
+  <li><del>冒充，假冒身份通讯</del>  身份验证</li>
+</ul>
+
+<p><img src="http://ww2.sinaimg.cn/large/934b5ef8gw1fbcb0ajbgej20il09zmzr.jpg" alt="" /></p>
+
+<h2 id="https-通讯流程">HTTPS 通讯流程</h2>
+<p>以下流程以 web 访问一个 HTTPS 网站为例：</p>
+
+<pre><code class="language-sequence">Client-&gt;Service: 1.发送支持的协议版本，发送一个‘随机数’
+Service--&gt;Client: 2.确定协议版本，发送一个‘随机数’，发送证书
+Client-&gt;Service: 3.验证证书通过，发送一个公钥加密过后的‘随机数’
+Service--&gt;Client: 4.协商好的加密方法
+Client-&gt;Service:5.发送公钥加密之后的密钥，之后使用密钥加密通讯
+Service--&gt;Client: ...
+</code></pre>
+
+<ol>
+  <li>发送能够支持的 SSL/TLS 协议版本，加密方法，压缩方法等，生成一个 <code class="highlighter-rouge">随机数</code> ，之后生成发密钥时用到，并送到服务端。</li>
+  <li>确定客户端能否支持的协议版本，若没有匹配，则取消此次连接。同时也确定加密方法和压缩方法。生成一个 <code class="highlighter-rouge">随机数</code>，同时发送 <code class="highlighter-rouge">随机数</code> 和证书。</li>
+  <li>客户端认证证书是否有效，若无效，页面弹出警告窗口。若有效，取出证书中的公钥。生成一个 <code class="highlighter-rouge">随机数</code> ，并用公钥加密之后发送给服务端。</li>
+  <li>此时服务端保存有两个明文的 <code class="highlighter-rouge">随机数</code> 和一个加密之后的 <code class="highlighter-rouge">随机数</code>。服务器通过密钥解密出 <code class="highlighter-rouge">随机数</code> ，三个 <code class="highlighter-rouge">随机数</code> 通过一个密钥生成器，生成之后通讯所需的对称密钥。</li>
+  <li>此时客户端有三个 <code class="highlighter-rouge">随机数</code>，通过一个密钥生成器，生成之后通讯所需的对称密钥，通过非对称的密钥（证书中公钥多对应的密钥）对对称密钥加密传输给服务端，服务端使用私钥解密出对称密钥。</li>
+</ol>
+
+<h2 id="还有哪些不安全">还有哪些不安全</h2>
+<p>通过上面的 HTTPS 握手过程已经比较安全了。但是其中还存在一些问题：</p>
+
+<ul>
+  <li>证书被篡改</li>
+  <li>证书是伪造的</li>
+</ul>
+
+<p>首先我们先了解下，证书的格式和证书是如何验证的。</p>
+<h4 id="证书的格式">证书的格式</h4>
+<p>一个数据的内容主要包含下面几项：</p>
+
+<ol>
+  <li>证书包含了颁发证书的机构的名字（CA）</li>
+  <li>证书内容本身的数字签名（用CA私钥加密）</li>
+  <li>证书持有者的公钥</li>
+  <li>证书签名用到的 hash 算法</li>
+</ol>
+
+<p>CA 的名字是在验证时，获取根证书的公钥需要 CA 名字。数据签名保证了证书的内容完整正确无误。持有者的公钥用来在握手的时加密用。hash 算法在验证的时候需要用到。<br />
+<img src="http://ww4.sinaimg.cn/mw690/934b5ef8gw1fbch2izn6ej21040jijvh.jpg" alt="" />
+mac 的用户可以去［实用工具－钥匙串访问－系统根证书］里面包含一些系统内置的权威机构颁发的证书，比如 GlobalSign、VeriSign 等等。</p>
+
+<h4 id="证书的验证">证书的验证</h4>
+<p>我们已经了解了这些证书格式，他的验证过程如下：</p>
+
+<ol>
+  <li>获取证书的 CA，根据 CA 得到根证书的公钥</li>
+  <li>用根证书的公钥对证书的数字签名解密，得到证书内容的摘要 AA</li>
+  <li>用证书所提供的 hash 算法对证书内容进行 hash，得到摘要 BB</li>
+  <li>此时比较摘要 AA 和摘要 BB 相同则验证如同通过；反之，证书有问题。</li>
+</ol>
+
+<p>通过验证的了解。第一个问题如果在篡改证书的内容在验证的第四步中两个摘要不会相同，所以验证不通过。第二个问题伪造证书，伪造 CA 名字。如果根据 CA 名字找不到根证书认为是有问题证书。如果伪造数字签名，根证书解密不了认为是有问题证书 … 诸如此类问题其实都会在证书验证的过程中暴露出来。</p>
+
+<h2 id="https-的单向认证--双向认证">HTTPS 的单向认证 &amp; 双向认证</h2>
+<p>以上的握手过程是一个单向认证的过程，我们知道握手时只是验证了，服务端的身份。为什么叫单向认证？</p>
+
+<ul>
+  <li>单向认证：握手过程中，验证了服务端的证书是有效的。更关心的服务端的身份，而不是客户端的身份。比如访问 HTTPS 网站，大多都是单向认证，除一些银行的证书登录、网上支付等</li>
+  <li>双向认证：同时也关心客户端的身份有效性。比如：一些银行证书登录（插入 U 盾，里面内置了一些证书）。晚上支付的，一般在第一次访问的时候提示安装安全控件。</li>
+</ul>
+
+<h2 id="在-ios-中的-https">在 iOS 中的 HTTPS</h2>
+<ul>
+  <li>NSURLSession 
+我们熟知的 NSURLSession 对于默认支持 HTTPS 单向认证，这就是我们为什么在请求 HTTPS 接口的时候也是能得到数据的。
+但是对于双向认证，NSURLSession 也为我们提供了相应的代理方法。</li>
+</ul>
+
+<div class="language-ruby highlighter-rouge"><pre class="highlight"><code><span class="o">-</span> <span class="p">(</span><span class="n">void</span><span class="p">)</span><span class="no">URLSession</span><span class="p">:(</span><span class="no">NSURLSession</span> <span class="o">*</span><span class="p">)</span><span class="n">session</span> <span class="n">didReceiveChallenge</span><span class="p">:(</span><span class="no">NSURLAuthenticationChallenge</span> <span class="o">*</span><span class="p">)</span><span class="n">challenge</span>
+ <span class="n">completionHandler</span><span class="p">:(</span><span class="n">void</span> <span class="p">(</span><span class="o">^</span><span class="p">)(</span><span class="no">NSURLSessionAuthChallengeDisposition</span> <span class="n">disposition</span><span class="p">,</span> <span class="no">NSURLCredential</span> <span class="o">*</span> <span class="n">__nullable</span> <span class="n">credential</span><span class="p">))</span><span class="n">completionHandler</span> <span class="p">{</span>
+    <span class="no">NSLog</span><span class="p">(</span><span class="err">@</span><span class="s2">"%@"</span><span class="p">,</span><span class="n">challenge</span><span class="p">.</span><span class="nf">protectionSpace</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">challenge</span><span class="p">.</span><span class="nf">protectionSpace</span><span class="p">.</span><span class="nf">authenticationMethod</span> <span class="o">==</span> <span class="no">NSURLAuthenticationMethodServerTrust</span><span class="p">)</span> <span class="p">{</span>
+        <span class="no">NSURLCredential</span> <span class="o">*</span><span class="n">cre</span> <span class="o">=</span> <span class="p">[</span><span class="no">NSURLCredential</span> <span class="n">credentialForTrust</span><span class="ss">:challenge</span><span class="p">.</span><span class="nf">protectionSpace</span><span class="p">.</span><span class="nf">serverTrust</span><span class="p">];</span>
+        <span class="sr">//</span> <span class="err">调用</span><span class="n">block</span>
+        <span class="n">completionHandler</span><span class="p">(</span><span class="no">NSURLSessionAuthChallengeUseCredential</span><span class="p">,</span><span class="n">cre</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+</div>
+
+<p>对于一些要求双向认证的服务，在这个代理方法中实现认证即可。注意的是在 SSL 认证的过程中会两次调用此方法。</p>
+
+<ul>
+  <li>WKWebView 
+  在 WebKit 中也有相应的代理方法。</li>
+</ul>
+
+<div class="language-ruby highlighter-rouge"><pre class="highlight"><code>	<span class="o">-</span> <span class="p">(</span><span class="n">void</span><span class="p">)</span><span class="n">webView</span><span class="p">:(</span><span class="no">WKWebView</span> <span class="o">*</span><span class="p">)</span><span class="n">webView</span> <span class="n">didReceiveAuthenticationChallenge</span><span class="p">:(</span><span class="no">NSURLAuthenticationChallenge</span> <span class="o">*</span><span class="p">)</span><span class="n">challenge</span> <span class="n">completionHandler</span><span class="p">:(</span><span class="n">void</span> <span class="p">(</span><span class="o">^</span><span class="p">)(</span><span class="no">NSURLSessionAuthChallengeDisposition</span><span class="p">,</span> <span class="no">NSURLCredential</span> <span class="o">*</span> <span class="n">_Nullable</span><span class="p">))</span><span class="n">completionHandler</span> <span class="p">{</span>
+    
+     <span class="n">completionHandler</span><span class="p">(</span><span class="no">NSURLSessionAuthChallengeUseCredential</span><span class="p">,</span><span class="kp">nil</span><span class="p">);</span>
+<span class="p">}</span>  
+</code></pre>
+</div>
+
+<p>*以上两点，还未实践过，正确性还有待验证，仅作一个实现思路的参考ß</p>
+
+<h2 id="几个附加的概念">几个附加的概念</h2>
+
+<ul>
+  <li>对称加密：通讯双方持有相同的密钥，并且这个密钥可以同时实现加解密。</li>
+  <li>非对称加密：通讯双方持有不同的密钥，我们分别称作为公钥和密钥，一般公钥是公开的，大家都知道的。密钥是有一方保存不公开的。但是一个密钥加密的密文可以用公钥解开，用公钥加密的密文也可以用公钥解开。</li>
+  <li>电子证书的验证过程：用户的敏感个人数据并不会传输至索取数据者的电脑系统上。通常，当索取数据者获取用户的电子证书数据后，会即时递交至电子核证机关的系统中进行核证。当用户身份经确认后，核证机关会将经确认的消息转交至索取数据者，在此期间，除用户同意并主动给出的个人数据以外，其他数据（如出生日期、身份证号码等）均不会自动递交至索取数据者。通过这种数据交换模式，用户既可证实自己的身份，亦不用过度披露个人数据，对保障电脑服务访问双方皆有好处。</li>
+</ul>
+
+<h2 id="参考">参考</h2>
+<p><a href="https://segmentfault.com/a/1190000004523659">HTTPS科普扫盲帖</a><br />
+<a href="http://www.ruanyifeng.com/blog/2014/02/ssl_tls.html">SSL/TLS协议运行机制的概述</a><br />
+<a href="https://en.wikipedia.org/wiki/HTTPS">HTTPS wiki</a></p>
+
+<h2 id="写在后面">写在后面</h2>
+<p>希望对你有帮助，写的不正确的地方，欢迎拍砖～</p>
+
+
+</section>
+        	</article>
+		</div>
+	</div>
+</body>
+
+</html>
