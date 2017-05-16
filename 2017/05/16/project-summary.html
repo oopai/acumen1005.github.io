@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="google-site-verification" content="xFcvMZq5Xxvttne4BMyC276ExgD_GG5GUfEjKg2S1a8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="acumen
+">
+    <meta name="keywords"  content="谷雷雷, iOS, acumen, 咕噜噜, acumen1005, 互联网, 移动端技术">
+    <link rel="stylesheet" type="text/css" href="/media/css/main.css">
+    <link rel="stylesheet" type="text/css" href="/media/css/rouge.css">
+    <link rel="stylesheet" type="text/css" href="/media/css/syntax.css">    
+    <link rel="stylesheet" type="text/css" href="/media/css/bootstrap.css">
+
+    <!-- <link rel="shortcut icon" href="/img/favicon.ico"> -->
+
+    <title>项目总结（一） - acumen 的博客 | acumen Blog</title>
+
+    <script></script>
+</head>
+
+
+<!-- hack iOS CSS :active style -->
+<body ontouchstart="">
+	<div id="container">
+		<div id="main" role="main">
+			<header>
+				<h1>项目总结（一）</h1>
+			</header>
+			<nav>
+				<p><a title="home" href="/">home</a></p>
+				<p><a title="about" href="/about/">about</a></p>
+				<p><a title="links" href="/links/">links</a></p>
+			</nav>
+			<article class="content">
+        		<section class="post">
+<p>最近回学校了，终于有些空下来的时间，有机会说说前段时间所做的项目，在项目中遇到的问题和我所能想到的解决方案。
+最近，我司开了一个新的项目，由于某些原因这个项目前期是我主导的。简单概括一下项目，项目的只用 MVC 模式开发，语言使用 swift3.0，由于项目时间比较赶，框架是延用了我司现有的框架，由于前期的工作主要是做总体框架的搭建，而在这个框架中主要的是网络模块的设计（在之后可能会需要加入持久化方案等等）。
+接下来讲讲网络模块是如何构建的。该网络层主要封装了 Alamofire 的第三方网络库和 AlamofireObjectMapper 数据解析。</p>
+
+<div class="language-ruby highlighter-rouge"><pre class="highlight"><code><span class="n">enum</span> <span class="no">XXXAPI</span> <span class="p">{</span>
+	<span class="k">case</span> <span class="n">getUsers</span>
+	
+	<span class="n">func</span> <span class="n">path</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="no">String</span> <span class="p">{</span>
+		<span class="n">switch</span> <span class="nb">self</span> <span class="p">{</span>
+			<span class="k">case</span> <span class="p">.</span><span class="nf">getUsers</span><span class="p">:</span>
+				<span class="k">return</span> <span class="s2">"getUsers"</span>
+		<span class="p">}</span>
+	<span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+</div>
+<p>通过 swift 中 enum 枚举类型来管理网络请求中 endpoint。</p>
+
+<div class="language-ruby highlighter-rouge"><pre class="highlight"><code><span class="n">struct</span> <span class="no">APIClient</span> <span class="p">{</span>
+	<span class="n">static</span> <span class="n">let</span> <span class="n">baseUrl</span> <span class="o">=</span> <span class="s2">"http://xxx.xxx.xxx/api/"</span>
+	<span class="n">static</span> <span class="n">var</span> <span class="ss">headers: </span><span class="no">Dictionary</span><span class="o">&lt;</span><span class="no">String</span><span class="p">,</span> <span class="no">String</span><span class="o">&gt;</span> <span class="p">{</span>
+		<span class="k">return</span> <span class="p">[</span><span class="s2">"Content-Type"</span><span class="ss">:"json/text"</span><span class="p">]</span>
+	<span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+</div>
+<p>该 struct 是封装 Alamofire 的主体，定义了网络请求的 host 和请求头信息。</p>
+
+<div class="language-ruby highlighter-rouge"><pre class="highlight"><code><span class="n">static</span> <span class="n">func</span> <span class="n">request</span><span class="o">&lt;</span><span class="no">T</span><span class="p">:</span> <span class="no">Mappable</span><span class="o">&gt;</span><span class="p">(</span><span class="n">_</span> <span class="no">API</span><span class="p">:</span> <span class="no">XXXAPI</span><span class="p">,</span> <span class="p">.</span><span class="nf">.</span><span class="o">.</span><span class="p">)</span> <span class="p">{</span>
+	<span class="n">let</span> <span class="n">path</span> <span class="o">=</span> <span class="no">API</span><span class="p">.</span><span class="nf">path</span><span class="p">()</span>
+	<span class="n">let</span> <span class="n">url</span> <span class="o">=</span> <span class="n">baseUrl</span> <span class="o">+</span> <span class="n">path</span>
+	<span class="n">let</span> <span class="n">req</span> <span class="o">=</span> <span class="n">request</span><span class="p">(.</span><span class="nf">.</span><span class="o">.</span><span class="p">)</span>
+	<span class="n">handleResponse</span><span class="p">(.</span><span class="nf">.</span><span class="o">.</span><span class="p">)</span>
+<span class="p">}</span>
+</code></pre>
+</div>
+<p>以上是一个请求的主体，所有的 <code class="highlighter-rouge">get</code>、<code class="highlighter-rouge">post</code>、<code class="highlighter-rouge">put</code>、<code class="highlighter-rouge">delete</code> 都最终需要调用该方法。在这个 struct 的基础上扩展出我们自己封装的相应的 <code class="highlighter-rouge">get</code>、<code class="highlighter-rouge">put</code> 等方法。
+这里使用了泛型 <code class="highlighter-rouge">&lt;T: Mappable&gt;</code> 并且要求 <code class="highlighter-rouge">T</code> 遵循 <code class="highlighter-rouge">Mappable</code> 协议，该协议用来数据解析，与 Alamofire 配套的数据解析。
+在 request 的方法中 handleResponse 来处理请求返回的 json，做出相应的成功和错误的处理。</p>
+
+<div class="language-ruby highlighter-rouge"><pre class="highlight"><code><span class="n">static</span> <span class="n">func</span> <span class="n">handleResponse</span><span class="o">&lt;</span><span class="no">T</span><span class="p">:</span> <span class="no">Mappable</span><span class="o">&gt;</span><span class="p">(.</span><span class="nf">.</span><span class="p">.</span>
+    <span class="nf">completion</span><span class="p">:</span> <span class="vi">@escaping</span> <span class="p">(</span><span class="no">T</span><span class="sc">?,</span> <span class="no">String</span><span class="sc">?)</span> <span class="o">-&gt;</span> <span class="no">Void</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">request</span><span class="p">.</span><span class="nf">responseObject</span> <span class="p">{</span> <span class="p">(</span><span class="ss">response: </span><span class="no">DataResponse</span><span class="o">&lt;</span><span class="no">Result</span><span class="o">&lt;</span><span class="no">T</span><span class="o">&gt;&gt;</span><span class="p">)</span> <span class="k">in</span>
+      <span class="n">guard</span> <span class="n">let</span> <span class="n">result</span> <span class="o">=</span> <span class="n">response</span><span class="p">.</span><span class="nf">result</span><span class="p">.</span><span class="nf">value</span> <span class="k">else</span> <span class="p">{</span>
+        <span class="n">completion</span><span class="p">(</span><span class="kp">nil</span><span class="p">,</span> <span class="kp">nil</span><span class="p">,</span> <span class="s2">"网络错误"</span><span class="p">)</span>
+        <span class="k">return</span>
+      <span class="p">}</span>
+      
+      <span class="k">if</span> <span class="n">let</span> <span class="n">code</span> <span class="o">=</span> <span class="n">result</span><span class="p">.</span><span class="nf">code</span> <span class="p">{</span>
+        <span class="sr">//</span> <span class="no">TODO</span>
+      <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+        <span class="n">completion</span><span class="p">(</span><span class="kp">nil</span><span class="p">,</span> <span class="n">result</span><span class="p">.</span><span class="nf">msg</span> <span class="sc">??</span> <span class="s2">"服务器错误"</span><span class="p">)</span>
+      <span class="p">}</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+</code></pre>
+</div>
+
+<p><img src="http://ww1.sinaimg.cn/mw690/934b5ef8gy1ffn8vyztocj21380diacw.jpg" alt="" /></p>
+
+<p>以上就是项目中使用的网络请求的思路，他的核心 APIClient，在使用的时候，我们需要提供 XXXAPI、params、encoding、closure 这几个变量，调用相应的方法，值得注意的是，解析的数据模型与网络数据 json 要一致。
+在使用的过程中有以下的优点：</p>
+
+<ol>
+  <li>enum 统一管理请求的 endpoint 使代码的可维护性增强，阅读和查询起来也比较方便。</li>
+</ol>
+
+<p>当然在该过程中提出一点建议：</p>
+
+<ol>
+  <li>enum 管理应当扩大，其实 endpoint 所对应的 parameters、请求方法、encoding 都是已经确定的，所以在确定 endpoint 的同时其实我们也已经确定了它的参数、请求方法、编码方式等信息。</li>
+  <li>
+    <p>对于在多 host 的请求（也许我们所需要获取的数据在不同服务器上），当前的这个解决方案需要去重新定义一个 APIClient。我认为更好的解决方案是我们定一个这样的协议：</p>
+
+    <div class="language-ruby highlighter-rouge"><pre class="highlight"><code> <span class="n">protocol</span> <span class="no">Requestable</span> <span class="p">{</span>
+     <span class="n">var</span> <span class="ss">baseUrl: </span><span class="no">String</span> <span class="p">{</span> <span class="n">get</span> <span class="p">}</span>
+     <span class="n">var</span> <span class="ss">endpoint: </span><span class="no">String</span> <span class="p">{</span> <span class="n">get</span> <span class="p">}</span>
+     <span class="n">var</span> <span class="ss">method: </span><span class="no">HTTPMethod</span> <span class="p">{</span> <span class="n">get</span> <span class="p">}</span>
+     <span class="n">var</span> <span class="ss">parameters: </span><span class="p">[</span><span class="no">String</span><span class="p">:</span> <span class="no">AnyObject</span><span class="p">]?</span> <span class="p">{</span> <span class="n">get</span> <span class="p">}</span>
+     <span class="n">var</span> <span class="ss">headers: </span><span class="p">[</span><span class="no">String</span><span class="p">:</span> <span class="no">String</span><span class="p">]</span> <span class="p">{</span> <span class="n">get</span> <span class="p">}</span>
+<span class="p">}</span> 
+</code></pre>
+    </div>
+
+    <div class="language-ruby highlighter-rouge"><pre class="highlight"><code> <span class="n">extension</span> <span class="no">API</span><span class="p">:</span> <span class="no">Requestable</span> <span class="p">{</span>
+     <span class="n">var</span> <span class="ss">endpoint: </span><span class="no">String</span> <span class="p">{</span>
+         <span class="n">switch</span> <span class="nb">self</span> <span class="p">{</span>
+ 			<span class="k">case</span> <span class="p">.</span><span class="nf">once</span><span class="p">(</span><span class="n">_</span><span class="p">):</span>
+   			<span class="k">return</span> <span class="s2">"/"</span>
+ 		<span class="p">}</span>
+  		<span class="p">}</span>
+  		<span class="n">var</span> <span class="ss">method: </span><span class="no">HTTPMethod</span> <span class="p">{</span>
+  			<span class="n">switch</span> <span class="nb">self</span> <span class="p">{</span>
+             <span class="k">case</span> <span class="p">.</span><span class="nf">once</span><span class="p">(</span><span class="n">_</span><span class="p">):</span>
+                 <span class="k">return</span> <span class="p">.</span><span class="nf">get</span>
+         <span class="p">}</span>
+     <span class="p">}</span>
+     <span class="n">var</span> <span class="ss">parameters: </span><span class="p">[</span><span class="no">String</span><span class="p">:</span> <span class="no">AnyObject</span><span class="p">]?</span> <span class="p">{</span>
+         <span class="n">switch</span> <span class="nb">self</span> <span class="p">{</span>
+             <span class="k">case</span> <span class="p">.</span><span class="nf">once</span><span class="p">(</span><span class="n">let</span> <span class="nb">id</span><span class="p">):</span>
+                 <span class="k">return</span> <span class="p">[</span><span class="s2">"id"</span> <span class="p">:</span> <span class="nb">id</span> <span class="n">as</span> <span class="no">AnyObject</span><span class="p">]</span>
+         <span class="p">}</span>
+      <span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+    </div>
+
+    <p>而 <code class="highlighter-rouge">enum API</code> 遵循该协议，需要实现其中的 <code class="highlighter-rouge">get</code> 方法。这时对外我们只需要一个 API 的 enum 就够了，确定了 enum 的值，相应的 parameters 等等都确定了。
+通过这样处理，我们将网络层的 endpoint、parameters、HTTPMethod 等都统一的管理，而对外调用的时候只需要传递一个 <code class="highlighter-rouge">enum API</code> 的值和相应的参数即可。保持了比较好的封装性，固定的 parameters 也减少了在填写时的错误发生。</p>
+  </li>
+</ol>
+
+<p><em>以上属于个人简介，如有错误，欢迎拍砖</em></p>
+
+
+</section>
+        	</article>
+		</div>
+	</div>
+</body>
+
+ <footer style="text-align:center;height:80px;bottom:0px;width: 100%;padding-top: 2em;">
+ 	<div style="line-height: 0;font-size: 16px;">
+ 		
+ 		Copyright &copy; 2016 ~ 2017  <a href="https://github.com/acumen1005">acumen</a> | Powered by <a href="http://jekyll.com.cn/">Jekyll</a>
+	</div>
+</footer>
+
+</html>

@@ -46,21 +46,20 @@
 
 <p>以上两个网络请求中间就涉及到 token 衔接，我们很容易想到这个问题，通过一次嵌套就能完成。</p>
 
-<div class="language-ruby highlighter-rouge"><pre class="highlight"><code><span class="no">APICilent</span><span class="p">.</span><span class="nf">login</span><span class="p">(</span><span class="ss">url: </span><span class="s2">"https://xxxx/api/login"</span><span class="p">,</span> <span class="ss">params: </span><span class="n">paramDict</span><span class="p">,</span> <span class="ss">compelationHandler: </span><span class="p">{</span><span class="n">result</span><span class="p">,</span> <span class="n">reponse</span><span class="p">,</span> <span class="n">error</span> <span class="k">in</span> 
-	<span class="k">if</span> <span class="n">let</span> <span class="n">token</span> <span class="o">=</span> <span class="n">result</span><span class="p">[</span><span class="s2">"token"</span><span class="p">]</span> <span class="p">{</span>
-		<span class="no">APICilent</span><span class="p">.</span><span class="nf">fetchContact</span><span class="p">(</span><span class="ss">url: </span><span class="s2">"https://xxxx/api/contact"</span><span class="p">,</span> <span class="ss">params: </span><span class="n">paramDict</span><span class="p">,</span> <span class="n">compelationHandler</span><span class="p">:{</span><span class="n">result</span><span class="p">,</span> <span class="n">reponse</span><span class="p">,</span> <span class="n">error</span> <span class="k">in</span>
-			<span class="k">if</span> <span class="n">let</span> <span class="n">result</span> <span class="o">=</span> <span class="n">result</span> <span class="p">{</span>
+<pre><code class="language-objectivec">APICilent.login(url: "https://xxxx/api/login", params: paramDict, compelationHandler: {result, reponse, error in 
+	if let token = result["token"] {
+		APICilent.fetchContact(url: "https://xxxx/api/contact", params: paramDict, compelationHandler:{result, reponse, error in
+			if let result = result {
 		
-			<span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
-				<span class="sr">//</span> <span class="n">error</span>
-			<span class="p">}</span>
-		<span class="p">})</span>
-	<span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
-		<span class="sr">//</span> <span class="n">error</span>
-	<span class="p">}</span>
-<span class="p">})</span>
+			} else {
+				// error
+			}
+		})
+	} else {
+		// error
+	}
+})
 </code></pre>
-</div>
 
 <p>此时我们只有两个依赖请求，如果这样的请求很多个的话，我们就陷入了回调地狱（也就是出现大量的 <code class="highlighter-rouge">}</code> 这样的符号）在 else 中无法看清是哪个对应关系。这样的代码既不美观也很难维护。这个问题在最早发生在 JavaScript，所以我们有时看到原生的 JavaScript 代码中就含有大量的这样的 ‘又臭又长’ 的代码。
 但是在 Cocoa 框架中好像没有很好的解决方法。直到有一天，我看到 ES6 的新特性 Promise。</p>
