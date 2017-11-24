@@ -116,6 +116,7 @@
 <ol>
   <li>点击一个链接打开 APP 的之后 <em>右上角出现一个箭头</em>， 点击之后就会返回到 Safari 相应的页面。这里有个巨坑就是之后你会发现：你再点链接就不会跳转到 APP 了。这时候只有通过 3D Touch (6s 以上) 出现一个 ActionSheet，选择 <code class="highlighter-rouge">在 "XXX" 中打开</code> ，之后点击链接就又可以跳转到 APP 了。这里 Apple 的设计猜想是兼顾到 safari 打开链接吧，点击了右上角的箭头代表了你不想跳转到 APP 所以下次就直接用 safari 打开了。换句话说，就是 Apple 会记住上次的操作。还有在配置 apple-app-site-association 文件的 <code class="highlighter-rouge">paths</code> 字段的时候不要太暴力的用 <code class="highlighter-rouge">*</code>，如果 <code class="highlighter-rouge">route/a/*</code> 和 <code class="highlighter-rouge">route/b/*</code> 要比 <code class="highlighter-rouge">route/*</code> 要好。系统记住操作是根据 paths 来的。比如 <code class="highlighter-rouge">route/a/*</code> 用 safari 打开了，但是 <code class="highlighter-rouge">route/b/*</code>  这样的路径还是会跳转 APP，如果是 <code class="highlighter-rouge">route/*</code> 的话就一棒子打死了。</li>
   <li>safari 中是无法直接跳转到 APP 的。在 safari 输入一个链接之后，再下滑，会看到 <code class="highlighter-rouge">在 “xxx” 应用中打开</code> 这个一个 banner。点击跳转到 APP。如果你的页面会重定向到 H5 的话，记得将 domain 加入到 Associated Domains 中。</li>
+  <li>universal links 要正常的在浏览器或者网页使用，是需要 <code class="highlighter-rouge">跨域</code> 的，也就是说 www.xxx.com/feed/1 这个 universal link 如果在 www.xxx.com 网页里点击是无法唤起 app 的，因为他们处于相同的域名之下。像知乎，airbnb，就是用一个子域名专门来制作 universal link 。eg：ois.zhihu.com 当然对应的 <code class="highlighter-rouge">apple-app-site-association</code> 和 Xcode 中的 <code class="highlighter-rouge">Applinks</code> 也要做相应的修改。</li>
 </ol>
 
 <h2 id="总结">总结</h2>
